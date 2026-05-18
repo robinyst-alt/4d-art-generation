@@ -1,9 +1,9 @@
 # 4D Art - 4D 像素矩阵生成器 PRD
 
-**状态**：想法阶段
+**状态**：Phase 1 实现完成
 **创建时间**：2026-05-10
-**文档版本**：v0.1
-**最后更新**：2026-05-11
+**文档版本**：v0.7
+**最后更新**：2026-05-18
 
 ---
 
@@ -28,7 +28,19 @@
 
 ### 成功愿景 (Phase 1 Goal)
 
-在第一阶段，用户可以快速生成一个数学定义的 4D 物体，通过拖拽交互探索不同切片，感受四维空间的神秘与美。整个过程无需安装任何插件，打开浏览器即可体验。
+在第一阶段，用户可以快速生成一个数学定义的 4D 物体，通过四象限切片控制探索不同切面视角，感受四维空间的神秘与美。整个过程无需安装任何插件，打开浏览器即可体验。
+
+**Phase 1 已实现状态**：
+- 6 种预设 4D 物体：Tesseract、4D Sphere、4D Octahedron、4D Dodecahedron、4D Icosahedron、4D Torus
+- 四象限切片面板（xyzw 每个维度独立控制切片/自由模式）
+- 默认 w=0 唯一切片，xyz 自由轴
+- 切片模式：滑条位置决定切面位置，移动滑条图形形态改变
+- 自由模式：滑条可拖动但不影响图形展示，仅改变视角
+- 3D 视角可自由旋转、缩放
+- Content Hash 生成（SHA-256 前 12 字符）
+- 一键截图自动保存
+
+**Phase 1 测试覆盖率**：80% 全局覆盖率（所有模块）
 
 ---
 
@@ -39,25 +51,32 @@
 #### US-001: 生成 4D 艺术作品 (P0)
 作为用户，我希望通过简单的操作生成 4D 艺术作品，以便快速体验四维视觉的魅力
 - 选择预设的四维物体（超立方体、4D 球体等）
-- 调整生成参数（分辨率、颜色主题）
 - 点击生成，系统计算并渲染 4D 数据
 - 获得唯一的 Content Hash 作为作品标识
 
 #### US-002: 探索四维切片 (P0)
-作为用户，我希望通过拖拽自由探索四维物体的不同切片，以便深入理解四维结构
-- 拖动滑块改变 w 维度值（第四维度）
-- 实时查看对应切片的三维结构
-- 旋转视角查看当前切片的全貌
+作为用户，我希望通过切片控制来探索四维物体不同位置的形态，以便深入理解四维结构
+- 至少选择 1 个维度作为切片，切片值决定在该维度上的切面位置
+- 剩余未选为切片的维度可以自由旋转/缩放，但移动其滑条不影响图形展示
+- 移动切片值会改变 3D 图形的形态（图形变形）
+- 例：w=0 切片 → XYZ 自由旋转；w=10 切片 → XYZ 图形变形
 - 保存感兴趣的关键切片截图
 
-#### US-003: 提交作品参加展示 (P1)
+#### US-003: 多切片探索 (P0)
+作为用户，我希望同时选择多个维度作为切片，以便观察更低维度的截面形态
+- 可以选择 1-3 个维度作为切片
+- 切片数量 = 4 - 剩余自由轴数
+- 例：w=10 和 y=7 都是切片 → 展示 XZ 平面（可自由旋转）
+- 切片滑条移动会改变图形形态；非切片轴滑条移动仅改变视角
+
+#### US-004: 提交作品参加展示 (P1)
 作为用户，我希望将我满意的 4D 作品提交到前端展示区，以便分享给更多人欣赏
 - 注册账号并登录
 - 选择已生成的作品（通过 Content Hash 引用）
 - 填写作品描述和标签
 - 提交审核（可选：支付 Gas 铸造 NFT）
 
-#### US-004: AI 生成创意作品 (P2)
+#### US-005: AI 生成创意作品 (P2)
 作为高级用户，我希望通过 AI 生成独特的四维艺术，而不是使用预设模板
 - 输入创意 prompt（文字描述）
 - AI 生成多张不同 w 值的切片图片
@@ -67,21 +86,20 @@
 ### 核心使用流程
 
 ```
-访问首页 → 选择物体类型 → 调整参数 → 点击生成
-                                    ↓
-4D 数据生成 → 渲染当前切片 → 拖拽探索 w 维度 → 保存/分享
+访问首页 → 选择物体类型 → 点击生成
+                            ↓
+4D 数据生成 → 四象限控制 → 切片/固定探索 → 保存/分享
 ```
 
 ### 交互时间预期
 
 | 步骤 | 用户行为 | 系统响应 | 预期时间 |
 |------|---------|---------|---------|
-| 1 | 选择物体类型 | 高亮选中项，加载预设参数 | < 100ms |
-| 2 | 调整分辨率/颜色 | 实时预览缩略图 | < 100ms |
-| 3 | 点击生成按钮 | 显示加载进度，计算 4D 数据 | < 3s |
-| 4 | 拖动 w 维度滑块 | 实时渲染对应切片 | < 16ms (60fps) |
-| 5 | 旋转/缩放视角 | Three.js 渲染器更新画面 | < 16ms (60fps) |
-| 6 | 点击保存/分享 | 生成截图或复制分享链接 | < 500ms |
+| 1 | 选择物体类型 | 高亮选中项 | < 50ms |
+| 2 | 点击生成按钮 | 显示加载进度，计算 4D 数据 | < 3s |
+| 3 | 四象限切片/固定 | 实时渲染对应视角 | < 16ms (60fps) |
+| 4 | 旋转/缩放视角 | Three.js 渲染器更新画面 | < 16ms (60fps) |
+| 5 | 一键截图 | 自动保存 PNG 到本地 | < 500ms |
 
 ---
 
@@ -98,14 +116,14 @@
 | 选项 | 超立方体, 4D 球体, 4D 八面体, 4D 十二面体, 4D 二十面体, 4D 环面, 自定义参数 |
 | 默认值 | 超立方体 |
 
-#### F-102: 参数配置面板 (P0)
-调整 4D 物体的生成参数
+#### F-102: 截图按钮 (P0)
+一键将当前 3D 视角截图并自动保存到本地
 
 | 字段 | 值 |
 |------|---|
-| 分辨率 | 滑块 8-32，默认 24 |
-| 颜色主题 | 预设色板: 霓虹, 素描, 萤火, 极光, 赛博朋克 |
-| 透明度 | 滑块 0-100% |
+| 截图格式 | PNG，1920x1080 |
+| 保存方式 | 点击按钮自动下载到本地 |
+| 文件命名 | `4d-art-{timestamp}.png` |
 
 #### F-103: 4D 数据生成器 (P0)
 根据选定的物体类型和参数，在前端计算生成 4D 像素矩阵
@@ -116,17 +134,36 @@
 | 数据量 | 24³ = 13,824 点 ≈ 50KB |
 | 计算时间 | < 2s |
 
-#### F-104: 4D 拖拽窗口 / 核心交互 (P0)
-通过拖拽滑块改变 w 维度（第四维度）值，实时查看对应的 3D 切片
+#### F-104: 四象限切片控制 (P0)
+管理 xyzw 四个维度的切片/自由状态，实时探索四维结构
 
 | 字段 | 值 |
 |------|---|
-| w 滑块 | 范围 0 到 (resolution-1)，实时响应 |
-| 3D 视角控制 | 鼠标拖拽旋转，滚轮缩放 |
+| 象限数量 | 4 个 (x, y, z, w) |
+| 模式 | 切片 / 自由 (每个轴独立选择) |
+| 切片数量 | 至少 1 个，最多 3 个 |
+| 切片值范围 | [0, 23]，整数 |
+| 默认状态 | w=0 作为唯一切片，xyz 为自由轴 |
 | 帧率 | Target 60fps，16ms 内完成切片提取 |
 
+**切片逻辑**：
+- **切片**：该维度作为切片，其值决定切面位置
+  - 移动切片滑条 → 图形形态改变（变形）
+- **自由**：该维度不作为切片，可以旋转/缩放视图
+  - 移动自由轴滑条 → 不影响图形展示，仅改变视角
+- 旋转/缩放是对当前 XYZ 组合视图的操作，与切片值无关
+
+**场景示例**：
+
+| 切片轴 | 切片值 | 自由轴 | 3D 视图 |
+|--------|-------|--------|---------|
+| w | 0 | xyz | XYZ 自由旋转（图形不变形） |
+| w | 10 | xyz | XYZ 图形变形 |
+| w, y | 0, 7 | xz | XZ 平面（可自由旋转） |
+| w, y, z | 0, 7, 15 | x | X 轴线条 |
+
 #### F-105: Three.js 3D 渲染器 (P0)
-将当前 w 切片的 3D 数据渲染为可交互的视觉画面
+将当前切片数据渲染为可交互的视觉画面
 
 | 字段 | 值 |
 |------|---|
@@ -134,6 +171,7 @@
 | 相机 | PerspectiveCamera，FOV 50° |
 | 控制 | OrbitControls |
 | 几何体 | Points / BoxGeometry 颗粒化 |
+| 动态轴 | 根据固定状态动态计算参与渲染的轴 |
 
 #### F-106: Content Hash 生成 (P1)
 为每个生成的作品生成唯一的 Content Hash，类似 Git commit hash
@@ -144,13 +182,59 @@
 | 输入 | 物体类型 + 参数 + 时间戳 + 随机种子 |
 | 格式 | 如: `a7f3b2c9d8e1` |
 
-#### F-107: 截图/分享功能 (P1)
-保存当前视图为图片或生成分享链接
+#### F-108: 四象限切片面板 (P0)
+同时控制 xyzw 四个维度的切片/自由状态，实现多切片探索
 
 | 字段 | 值 |
 |------|---|
-| 截图格式 | PNG，1920x1080 |
-| 分享链接 | URL 包含 hash 参数，可复现当前状态 |
+| 象限数量 | 4 个 (x, y, z, w) |
+| 模式 | 切片 / 自由 (每个轴独立选择) |
+| 切片数量 | 至少 1 个 |
+| 切片值范围 | [0-23]，整数 |
+| 默认状态 | w=0 唯一切片，xyz 自由轴 |
+
+**切片/自由交互逻辑**：
+
+| 切片数量 | 切片轴 | 自由轴 | 3D 视图 |
+|---------|--------|--------|---------|
+| 1 | w=0 | xyz | XYZ 自由旋转（不变形） |
+| 1 | w=10 | xyz | XYZ 图形变形 |
+| 2 | w=0, y=7 | xz | XZ 平面（可自由旋转） |
+| 3 | w=0, y=7, z=15 | x | X 轴线条 |
+
+**UI 组件设计**：
+
+每个轴（X/Y/Z/W）包含：
+- **轴标签**：X轴、Y轴、Z轴、W轴
+- **切片/自由切换按钮**：`[切片]` 或 `[自由]`
+- **滑条**：切片时实心点位置显示切片值；自由时显示但不影响图形
+- **数值**：右侧长期显示当前值 [0-23]，整数
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  X轴 [自由] │━━━━━━━●━━━━━━━━━━━━━━━  16   ← 自由轴       │
+│  Y轴 [切片] │━━━━━━━━━━━━━━━━━━━━●━━━  7   ← 切片值7       │
+│  Z轴 [自由] │━━━━●━━━━━━━━━━━━━━━━━━━━   4   ← 自由轴       │
+│  W轴 [切片] │━━━━━━━●━━━━━━━━━━━━━━━  0   ← 切片值0       │
+└─────────────────────────────────────────────────────────────┘
+
+切片/自由切换：[切片] 激活 | [自由] 未激活
+切片滑条：━━●━━ 实心点表示切片位置，移动会改变图形形态
+自由滑条：━━●━━ 可拖动但不影响图形展示
+数值范围：[0-23]，整数
+```
+
+**切片逻辑**：
+- 点击 `[切片]`/`[自由]` 切换该轴模式
+- 切片轴：滑条位置决定切面位置，移动滑条图形形态改变
+- 自由轴：滑条可拖动但不影响图形展示，仅自由旋转视角
+- 默认 w=0 作为切片，xyz 为自由轴
+- **约束**：至少 1 个切片（切片轴数量 >= 1）
+
+**状态定义**：
+- `mode`: 'slice' | 'free' — 切片或自由模式
+- `sliceValue`: number — 切片值 [0-23]
+- xyzw 四个轴功能完全一致，每个轴独立控制自己的模式
 
 ---
 
@@ -246,13 +330,169 @@ Ollama 生成描述 → Stable Diffusion 生成切片图片 → 转换为 4D 矩
 │   │   └── renderer.js     # WebGL 渲染器
 │   ├── ui/
 │   │   ├── controls.js     # 用户输入处理
+│   │   ├── quadrant.js    # 四象限控制面板
 │   │   └── state.js        # 应用状态管理
+│   ├── quadrant/
+│   │   ├── stateManager.js # 四象限状态管理
+│   │   ├── projection.js   # 渲染轴计算
+│   │   └── axisControl.js  # 单轴控制组件
 │   └── utils/
 │       ├── hash.js         # Content Hash 生成
 │       └── storage.js      # LocalStorage 封装
 └── assets/
     └── icons/              # SVG 图标
 ```
+
+### 四象限切片架构
+
+#### 数据模型
+
+```javascript
+// 轴枚举
+type Axis = 'x' | 'y' | 'z' | 'w';
+
+// 轴模式：切片 或 自由
+type AxisMode = 'slice' | 'free';
+
+// 轴状态
+interface AxisState {
+  mode: AxisMode;              // 切片或自由模式
+  sliceValue: number;          // 切片值 [0-23]
+  resolution: number;          // 该轴分辨率 (24)
+}
+
+// 四象限状态
+interface QuadrantState {
+  axes: Record<Axis, AxisState>;
+  sliceAxes: Axis[];           // 当前切片轴
+  freeAxes: Axis[];           // 当前自由轴
+}
+
+// 约束：至少 1 个切片轴
+const MIN_SLICE_AXES = 1;
+
+// 默认状态：w=0 唯一切片，xyz 自由轴，值范围 [0-23]
+const DEFAULT_QUADRANT_STATE = {
+  x: { mode: 'free', sliceValue: 12, resolution: 24 },
+  y: { mode: 'free', sliceValue: 12, resolution: 24 },
+  z: { mode: 'free', sliceValue: 12, resolution: 24 },
+  w: { mode: 'slice', sliceValue: 0, resolution: 24 },
+};
+```
+
+#### 渲染轴动态计算
+
+```javascript
+// 计算当前切片轴和自由轴
+function calculateAxes(axes) {
+  const sliceAxes = Object.entries(axes)
+    .filter(([, state]) => state.mode === 'slice')
+    .map(([a]) => a as Axis);
+
+  const freeAxes = Object.entries(axes)
+    .filter(([, state]) => state.mode === 'free')
+    .map(([a]) => a as Axis);
+
+  return { sliceAxes, freeAxes };
+}
+
+// 验证约束：至少 1 个切片轴
+function canSetFree(axis, axes) {
+  const currentSliceCount = Object.values(axes).filter(s => s.mode === 'slice').length;
+  const targetAxisIsSlice = axes[axis].mode === 'slice';
+  // 如果该轴是切片，取消后会少于 1 个切片轴，则不允许
+  if (!targetAxisLocked && currentlyLocked === 1) {
+    return false;
+  }
+  return true;
+}
+```
+
+#### 状态管理（state.js 扩展）
+
+```javascript
+// 四象限状态：w=0 唯一切片，xyz 自由轴
+const quadrantState = {
+  axes: {
+    x: { mode: 'free', sliceValue: 12, resolution: 24 },
+    y: { mode: 'free', sliceValue: 12, resolution: 24 },
+    z: { mode: 'free', sliceValue: 12, resolution: 24 },
+    w: { mode: 'slice', sliceValue: 0, resolution: 24 },
+  }
+};
+
+// Actions
+function setAxisMode(axis, mode) {
+  // 设置切片/自由模式，但确保至少 1 个切片轴
+  // 切片轴：滑条位置决定切面位置
+  // 自由轴：滑条可拖动但不影响图形展示
+}
+
+function setSliceValue(axis, value) {
+  // 设置切片值 [0-23]（仅在切片模式下有效）
+  // 值必须是整数
+  // 移动切片值会改变图形形态
+}
+```
+
+#### 数据流
+
+```
+用户交互（滑动/点击模式切换）
+       │
+       ▼
+AxisControl 组件
+       │
+       ▼
+stateManager 更新轴状态
+       │
+       ├──► 计算当前切片轴和自由轴
+       │           │
+       │           ▼
+       │    SceneView 重新渲染
+       │
+       └──► slice.js 提取切片数据
+                   │
+                   ▼
+            Three.js 渲染
+```
+AxisControl 组件
+       │
+       ▼
+stateManager 更新轴状态
+       │
+       ├──► projection.js 计算渲染轴
+       │           │
+       │           ▼
+       │    SceneView 重新渲染
+       │
+       └──► slice.js 提取对应切片
+                   │
+                   ▼
+            Three.js 渲染
+```
+
+#### 组件结构
+
+```
+QuadrantControlPanel
+├── AxisControl (x4: XAxis, YAxis, ZAxis, WAxis)
+│   ├── AxisLabel (x/y/z/w)
+│   ├── LockButton (锁定/解锁切换)
+│   ├── SliceSlider (切片模式时可拖动)
+│   └── ValueDisplay (右侧数值显示 [0-23])
+└── ActiveAxesIndicator (当前渲染轴显示)
+```
+
+#### 降维规则表
+
+| 锁定轴数 | 未锁定轴 | 渲染视角 |
+|---------|---------|----------|
+| 1 | xyz | 3D 切面（默认 W 锁定时为 XYZ） |
+| 2 | xy/xz/yz | 2D 平面拉伸为 3D |
+| 3 | x/y/z | 单维度向三轴延伸 |
+
+**约束**：至少锁定 1 个轴，不可全部解锁
 
 ### 核心模块接口
 
@@ -295,18 +535,29 @@ function generate(type, params) {
 ```javascript
 /**
  * 从 4D 矩阵中提取 3D 切片
+ * 支持多维度切片/固定组合
  */
 
-// 提取 w 维度的切片
+// 提取多维度切片结果
+// 输入: fourDMatrix, axisConfig = { x: {locked, value}, y: {locked, value}, z: {locked, value}, w: {locked, value} }
+// 输出: 根据锁定状态返回降维后的数据
+function extractMultiAxisSlice(fourDMatrix, axisConfig) {
+  // 1. 遍历所有固定维度，从高维到低维提取
+  // 2. 未固定维度保留在结果中
+  // 3. 返回 3D 或 2D 数据用于渲染
+}
+
+// 提取 w 维度的切片 (兼容旧逻辑)
 function extractSlice(fourDMatrix, wIndex) {
   // 输入: 4D Float32Array
   // 输出: 3D Float32Array [z][y][x][rgba]
 }
 
 // 转换为 Three.js 可用的几何数据
-function toThreePoints(sliceData) {
-  // 输入: 3D Float32Array
+function toThreePoints(sliceData, activeAxes) {
+  // 输入: 3D Float32Array + 活跃轴信息
   // 输出: THREE.Points 或 THREE.BoxGeometry
+  // 根据 activeAxes 确定哪些轴参与渲染
 }
 ```
 
@@ -332,39 +583,202 @@ async function generateContentHash(data) {
 }
 ```
 
-### CSS 设计令牌
+### 架构分层设计
 
-```css
-:root {
-  /* 颜色 */
-  --color-bg: #0a0a0f;
-  --color-surface: #12121a;
-  --color-border: #2a2a3a;
-  --color-text: #e4e4e7;
-  --color-text-muted: #8888a0;
-  --color-accent: #6366f1;
+```
+┌─────────────────────────────────────────────────────────┐
+│                      UI Layer                           │
+│  (Controls, Panels, Canvas - 用户交互入口)              │
+├─────────────────────────────────────────────────────────┤
+│                   Render Layer                         │
+│  (Three.js Scene, Camera, Renderer - 3D渲染引擎)         │
+├─────────────────────────────────────────────────────────┤
+│                    4D Core Layer                       │
+│  (Generators, Matrix, Slice - 四维数学引擎)              │
+├─────────────────────────────────────────────────────────┤
+│                   Worker Layer                         │
+│  (Web Workers - 密集计算隔离)                            │
+├─────────────────────────────────────────────────────────┤
+│                   Utils Layer                          │
+│  (Hash, Storage - 工具函数)                             │
+└─────────────────────────────────────────────────────────┘
+```
 
-  /* 间距 */
-  --space-xs: 0.25rem;
-  --space-sm: 0.5rem;
-  --space-md: 1rem;
-  --space-lg: 1.5rem;
-  --space-xl: 2rem;
+### Phase 1 模块职责
 
-  /* 圆角 */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+| 模块 | 职责 | 公共接口 |
+|------|------|---------|
+| `generators.js` | 4D 超立方体、球体、Octahedron、Dodecahedron、Icosahedron、Torus 生成 | `generateTesseract(resolution, size)`, `generate4DSphere(resolution, radius)`, `generate4DOctahedron(resolution)`, `generate4DDodecahedron(resolution)`, `generate4DIcosahedron(resolution)`, `generate4DTorus(resolution, majorR, minorR)`, `generate(type, params)` |
+| `slice.js` | 从 4D 矩阵提取 3D 切片 | `extractSlice(matrix, resolution, wIndex)`, `extractMultipleSlices(matrix, resolution, wRange)`, `toThreePoints(sliceData, resolution)` |
+| `scene.js` | 场景图管理、几何体创建 | `createScene()`, `addMesh(geometry)`, `updateGeometry(mesh, data)` |
+| `camera.js` | 相机控制、OrbitControls | `createCamera()`, `setProjection(type)`, `enableControls(domElement)` |
+| `renderer.js` | WebGL 渲染器配置、截图 | `createRenderer()`, `render(scene, camera)`, `captureScreenshot()` |
+| `controls.js` | 参数配置面板、四象限切片控制 | `initControls(container)`, `onParamChange(callback)`, `setValue(param, value)` |
+| `state.js` | 应用状态管理（轻量状态机） | `createState(initial)`, `dispatch(action)`, `subscribe(listener)` |
+| `hash.js` | Content Hash 生成 | `generateContentHash(data)`, `generateFileHash(blob)` |
 
-  /* 字体 */
-  --font-mono: 'SF Mono', 'Fira Code', monospace;
-  --font-sans: -apple-system, system-ui, sans-serif;
+### 数据流设计
 
-  /* 动效 */
-  --duration-fast: 150ms;
-  --duration-normal: 300ms;
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-}
+```
+用户滑动四象限控制
+      │
+      ▼
+┌─────────────┐
+│ controls.js │  解析轴状态
+└─────────────┘
+      │
+      ▼
+┌─────────────┐
+│  state.js   │  dispatch('AXIS_CHANGE', { axis, locked, value })
+└─────────────┘
+      │
+      ▼
+┌─────────────┐     ┌─────────────────┐
+│  app.js     │────▶│  slice.js       │  extractMultiAxisSlice(matrix, axisConfig)
+└─────────────┘     └─────────────────┘
+      │                      │
+      ▼                      ▼
+┌─────────────┐     ┌─────────────────┐
+│  scene.js   │◀────│  Float32Array   │  降维后数据
+└─────────────┘     └─────────────────┘
+      │
+      ▼
+┌─────────────┐
+│ renderer.js │  requestAnimationFrame → WebGL 绘制
+└─────────────┘
+```
+
+### Web Worker 策略
+
+对于密集计算任务（如高分辨率 4D 球体生成），采用 Web Worker 隔离：
+
+```
+┌─────────────────┐         ┌─────────────────┐
+│     main.js     │         │  generator.worker.js │
+│   (主线程)       │◀───────▶│  (Worker 线程)   │
+└─────────────────┘  postMessage  └─────────────────┘
+     │                      │
+     ▼                      ▼
+ UI 无阻塞              密集计算
+```
+
+### Phase 2 AI 流水线架构
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                            前端 (Phase 1)                               │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         AI Service Layer                               │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────────┐   │
+│  │ Ollama API   │  │ Stable       │  │  Image-to-4D Pipeline        │   │
+│  │ (LLM)        │  │ Diffusion    │  │  (图片反推 4D 矩阵)          │   │
+│  └──────────────┘  └──────────────┘  └──────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         迭代优化器                                      │
+│  (用户提供反馈 → 调整 Prompt/参数 → 重新生成)                            │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Phase 3 区块链架构
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           前端 (Phase 1+2)                              │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        Backend API Gateway                             │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────────┐   │
+│  │ REST API     │  │ WebSocket    │  │ Auth Middleware (JWT)        │   │
+│  │ /api/auth    │  │ /ws/art      │  │                              │   │
+│  └──────────────┘  └──────────────┘  └──────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────┘
+         │                                           │
+         ▼                                           ▼
+┌─────────────────┐                    ┌─────────────────────────────────┐
+│   Auth Service  │                    │       NFT Service              │
+│  - 注册/登录    │                    │  - 铸造 mint                    │
+│  - JWT 签发    │                    │  - 元数据存储                   │
+│  - 会话管理    │                    │  - 合约交互                     │
+└─────────────────┘                    └─────────────────────────────────┘
+         │                                           │
+         ▼                                           ▼
+┌─────────────────┐                    ┌─────────────────────────────────┐
+│   PostgreSQL    │                    │       Blockchain               │
+│   User Table    │                    │   (Polygon/Base)               │
+└─────────────────┘                    └─────────────────────────────────┘
+```
+
+### 性能优化策略
+
+| 策略 | 实现方式 | 预期收益 |
+|------|---------|---------|
+| 懒加载非首屏模块 | ES Dynamic Import | 首屏 JS < 150KB |
+| 几何体复用 | Geometry.clone() + BufferAttribute 更新 | 减少 GC 压力 |
+| 节流滑块事件 | requestAnimationFrame 同步轴值 | 避免过度渲染 |
+| TypedArray 零拷贝 | Float32Array 直接传递 | 减少内存复制 |
+| GPU 加速切片 | Shader 计算切片 | 释放 CPU |
+
+### 技术选型总结
+
+| 阶段 | 技术选型 | 理由 |
+|------|---------|------|
+| Phase 1 | Vanilla JS + Three.js | 轻量、高性能、零依赖 |
+| Phase 1 | Web Workers | 密集计算隔离，不阻塞 UI |
+| Phase 1 | TypedArrays | 高效内存使用，零拷贝传输 |
+| Phase 2 | Ollama + Stable Diffusion | 本地 AI，隐私保护，迭代优化 |
+| Phase 3 | Node.js + Express | 轻量 API 服务器 |
+| Phase 3 | PostgreSQL | 结构化数据存储，用户作品管理 |
+| Phase 3 | Polygon L2 | 低成本 NFT 铸造 |
+
+### 部署架构
+
+**Phase 1 静态部署**：
+```
+┌─────────────────┐
+│   CDN (Vercel/  │
+│   Cloudflare/   │
+│   Netlify)      │
+└─────────────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Browser Cache  │
+│  (Service Worker)│
+└─────────────────┘
+```
+
+**Phase 2/3 全栈部署**：
+```
+┌──────────────────────────────────────────────────┐
+│                    CDN                           │
+│              (静态资源 + 边缘缓存)                │
+└──────────────────────────────────────────────────┘
+                        │
+                        ▼
+┌──────────────────────────────────────────────────┐
+│              API Gateway (Node.js)               │
+│         (认证、限流、路由、监控)                   │
+└──────────────────────────────────────────────────┘
+         │                    │
+         ▼                    ▼
+┌─────────────────┐    ┌─────────────────┐
+│  AI Service     │    │  Database       │
+│  (Ollama + SD)  │    │  (PostgreSQL)   │
+└─────────────────┘    └─────────────────┘
+                               │
+                               ▼
+                    ┌─────────────────┐
+                    │  Blockchain     │
+                    │  (Polygon)      │
+                    └─────────────────┘
 ```
 
 ---
@@ -377,11 +791,22 @@ async function generateContentHash(data) {
 
 - [ ] 用户可选择至少 5 种预设四维物体并成功生成
 - [ ] 生成 24³ 分辨率 4D 数据时间 < 3 秒
-- [ ] w 维度滑块拖动响应时间 < 16ms（60fps）
+- [ ] 四象限控制响应时间 < 16ms（60fps）
 - [ ] 3D 视角可自由旋转、缩放，无卡顿
 - [ ] 每个作品生成唯一的 12 位 Content Hash
 - [ ] 截图功能保存当前视图为 PNG
 - [ ] 分享链接可恢复相同的 4D 物体状态
+
+#### 四象限控制验收
+
+- [ ] xyzw 四个象限均显示独立的锁定按钮和滑条
+- [ ] 点击锁定按钮 `[●]`，该维度切换为锁定状态
+- [ ] 锁定后滑条固定不动，显示当前锁定值
+- [ ] 未锁定时滑条可拖动，右侧数值实时更新 [0-23]
+- [ ] w 维度初始化为锁定状态（默认锁定值 12）
+- [ ] 锁定 2 个维度时，渲染剩余 2 个维度构成的平面
+- [ ] 锁定 3 个维度时，渲染剩余 1 个维度延伸为 3D
+- [ ] 至少锁定 1 个轴的约束生效
 
 #### 性能验收
 
@@ -393,7 +818,7 @@ async function generateContentHash(data) {
 #### 质量验收
 
 - [ ] 所有交互元素有明确的 hover/focus 状态
-- [ ] 键盘可访问（Tab 导航、A/D 键切换 w 值）
+- [ ] 键盘可访问（Tab 导航、方向键调整值）
 - [ ] 颜色对比度符合 WCAG 2.1 AA 标准
 - [ ] Reduced Motion 模式下禁用非必要动画
 - [ ] 100% 移动端响应式适配
@@ -403,26 +828,43 @@ async function generateContentHash(data) {
 | 检查点 | 描述 | 验收条件 |
 |--------|------|----------|
 | VP-01 | 4D 物体渲染清晰 | 无明显锯齿，点距均匀 |
-| VP-02 | 颜色主题正确应用 | 5 种预设色板均可选且显示正确 |
-| VP-03 | 切片切换流畅 | 24 次切换无闪烁、无重影 |
-| VP-04 | 背景与物体对比 | 物体在深色背景上清晰可见 |
-| VP-05 | UI 元素层级 | 控制面板不遮挡渲染区域 |
+| VP-02 | 四象限切片面板正确显示 | xyzw 各自独立，切片/自由模式可见 |
+| VP-03 | 数值长期显示在右侧 | [0-23] 整数实时更新 |
+| VP-04 | 切片/自由切换正常 | 切片轴移动滑条图形变形，自由轴滑条不影响展示 |
+| VP-05 | 背景与物体对比 | 物体在深色背景上清晰可见 |
 
 ---
 
 ## 6. 分阶段发布计划
 
-| 阶段 | 时间 | 交付内容 | 目标 |
-|------|------|---------|------|
-| **Phase 1** | Week 1-2 | 5+ 预设 4D 物体生成器, 4D 拖拽交互窗口, Content Hash 唯一编码, 截图/分享功能 | 可玩可用，吸引早期用户 |
-| **Phase 2** | Week 3-5 | AI Prompt 生成, Ollama + Stable Diffusion 集成, 图片转 4D 矩阵流水线, 迭代优化器 | 差异化 AI 功能 |
-| **Phase 3** | Week 6-8 | 账号系统, 区块链唯一编码, NFT 铸造接口, 精选作品展示页 | 完整商业闭环 |
+| 阶段 | 时间 | 交付内容 | 目标 | 状态 |
+|------|------|---------|------|------|
+| **Phase 1** | Week 1-2 | 6 种预设 4D 物体生成器, 四象限控制交互, Content Hash 唯一编码, 截图功能 | 可玩可用，吸引早期用户 | **开发中** |
+| **Phase 2** | Week 3-5 | AI Prompt 生成, Ollama + Stable Diffusion 集成, 图片转 4D 矩阵流水线, 迭代优化器 | 差异化 AI 功能 | 待开发 |
+| **Phase 3** | Week 6-8 | 账号系统, 区块链唯一编码, NFT 铸造接口, 精选作品展示页 | 完整商业闭环 | 待开发 |
 
-### 发布策略
+### Phase 1 功能清单
 
-- **Phase 1**: MVP 发布，通过 Product Hunt、Twitter 吸引早期用户
-- **Phase 2**: 基于用户反馈迭代 AI 生成质量
-- **Phase 3**: 配合 NFT mint event 进行 PR 宣传
+| 功能 ID | 功能名称 | 实现文件 | 状态 |
+|--------|---------|---------|------|
+| F-101 | 4D 物体选择器 | `js/ui/controls.js` | 待开发 |
+| F-102 | 截图按钮 | `js/render/renderer.js` | 待开发 |
+| F-103 | 4D 数据生成器 | `js/fourD/generators.js` | 待开发 |
+| F-104 | 四象限控制交互 | `js/quadrant/axisControl.js`, `js/ui/controls.js` | 待开发 |
+| F-105 | Three.js 3D 渲染器 | `js/render/scene.js`, `js/render/renderer.js`, `js/quadrant/projection.js` | 待开发 |
+| F-106 | Content Hash 生成 | `js/utils/hash.js` | 待开发 |
+| F-108 | 四象限控制面板 | `js/ui/quadrant.js`, `js/quadrant/stateManager.js`, `js/quadrant/projection.js` | 待开发 |
+
+### Phase 1 安全措施
+
+| 安全措施 | 实现位置 | 说明 |
+|---------|---------|------|
+| XSS 防护 | `js/ui/controls.js` | `escapeHtml()` 函数转义 HTML 特殊字符 |
+| 内存边界验证 | `js/fourD/generators.js` | 分辨率范围 4-64，防止内存耗尽 |
+| 输入验证 | `js/fourD/generators.js` | `validateResolution()` 验证分辨率参数 |
+| 数组边界验证 | `js/fourD/slice.js` | W 索引范围验证 `[0, resolution-1]` |
+| 状态不可变更新 | `js/ui/state.js` | 使用展开运算符创建新状态对象 |
+| 锁定约束验证 | `js/quadrant/stateManager.js` | 确保至少锁定 1 个轴 |
 
 ### 技术债务与预留
 
@@ -457,3 +899,51 @@ async function generateContentHash(data) {
 
 **风险**: 图片到矩阵可能有信息损失
 **缓解**: 迭代优化，用户可调整转换参数
+
+### K-03: 为什么每个维度用同一个滑条实现切片/固定切换？
+
+**决策**: 切片和固定共享同一个滑条 UI，通过交互方式区分
+
+**理由**:
+- 减少 UI 复杂度，不需要为每个维度显示两个独立控件
+- 交互直观：滑动=切片，点击=固定，符合用户直觉
+- 视觉上一致，便于理解四象限的整体状态
+
+**实现细节**:
+- 锁定按钮 `[●]` 位于轴标签右侧，单独控制锁定状态
+- 锁定后滑条固定 `━━━━●━━━━`，不能划动
+- 未锁定时滑条可拖动 `━━━━●━━━━`
+
+### K-04: 如何处理固定多个维度时的降维？
+
+**决策**: 固定维度后直接移除该轴的数据，剩余维度直接用于渲染
+
+**理由**:
+- 四维物体固定某维度后本质上就是一个三维问题
+- 固定两个维度 → 退化为二维平面，延伸为三维展示
+- 实现简单，无需复杂的坐标变换
+
+**边界情况**:
+- 锁定 0 个维度：默认使用 w 维度切片（Phase 1 原始行为）
+- 锁定 1 个维度：展示剩余 xyz 构成的三维切面
+- 锁定 2 个维度：展示剩余 xy/xz/yz 构成的平面（垂直方向拉伸）
+- 锁定 3 个维度：展示剩余 x/y/z 的一维线条（向三轴延伸）
+
+### K-05: 四象限状态管理设计
+
+**决策**: 使用集中式状态管理，所有轴状态统一在 quadrantState 中管理
+
+**理由**:
+- 四轴状态相互关联，需要统一计算渲染轴
+- 集中式便于实现"计算属性"（activeAxes, renderProjection）
+- 选择器模式支持高效的订阅和更新
+
+**关键设计**:
+- `locked`: boolean — 是否被锁定
+- `sliceValue`: number — 未锁定时的切片值 [0-23]
+- 锁定轴不参与渲染，但决定投影位置
+
+**性能考虑**:
+- Slider 事件使用 requestAnimationFrame 节流
+- 选择器使用 shallow 比较避免不必要的重渲染
+- 渲染轴计算为纯函数，便于测试和缓存
