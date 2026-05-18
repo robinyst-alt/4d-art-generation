@@ -1,0 +1,296 @@
+/**
+ * Theme Styles
+ *
+ * Theme-specific styles that apply different visual
+ * appearances based on the data-theme attribute.
+ * Supports: neon, sketch, firefly, aurora, cyberpunk
+ */
+
+/* ============================================
+ * Neon Theme
+ * ============================================ */
+[data-theme="neon"] {
+  --theme-primary: var(--neon-primary);
+  --theme-secondary: var(--neon-secondary);
+  --theme-tertiary: var(--neon-tertiary);
+  --theme-background: var(--neon-background);
+  --theme-background-elevated: var(--neon-background-elevated);
+  --theme-text: var(--neon-text);
+  --theme-text-muted: var(--neon-text-muted);
+  --theme-border: var(--neon-border);
+  --theme-glow: var(--neon-glow);
+  --theme-glow-strong: var(--neon-glow-strong);
+}
+
+/* ============================================
+ * Sketch Theme
+ * ============================================ */
+[data-theme="sketch"] {
+  --theme-primary: var(--sketch-primary);
+  --theme-secondary: var(--sketch-secondary);
+  --theme-tertiary: var(--sketch-tertiary);
+  --theme-background: var(--sketch-background);
+  --theme-background-elevated: var(--sketch-background-elevated);
+  --theme-text: var(--sketch-text);
+  --theme-text-muted: var(--sketch-text-muted);
+  --theme-border: var(--sketch-border);
+  --theme-glow: none;
+  --theme-glow-strong: none;
+}
+
+/* ============================================
+ * Firefly Theme
+ * ============================================ */
+[data-theme="firefly"] {
+  --theme-primary: var(--firefly-primary);
+  --theme-secondary: var(--firefly-secondary);
+  --theme-tertiary: var(--firefly-tertiary);
+  --theme-background: var(--firefly-background);
+  --theme-background-elevated: var(--firefly-background-elevated);
+  --theme-text: var(--firefly-text);
+  --theme-text-muted: var(--firefly-text-muted);
+  --theme-border: var(--firefly-border);
+  --theme-glow: var(--firefly-glow);
+  --theme-glow-strong: var(--firefly-glow-strong);
+}
+
+/* ============================================
+ * Aurora Theme
+ * ============================================ */
+[data-theme="aurora"] {
+  --theme-primary: var(--aurora-primary);
+  --theme-secondary: var(--aurora-secondary);
+  --theme-tertiary: var(--aurora-tertiary);
+  --theme-background: var(--aurora-background);
+  --theme-background-elevated: var(--aurora-background-elevated);
+  --theme-text: var(--aurora-text);
+  --theme-text-muted: var(--aurora-text-muted);
+  --theme-border: var(--aurora-border);
+  --theme-glow: var(--aurora-glow);
+  --theme-glow-strong: var(--aurora-glow-strong);
+}
+
+/* ============================================
+ * Cyberpunk Theme
+ * ============================================ */
+[data-theme="cyberpunk"] {
+  --theme-primary: var(--cyberpunk-primary);
+  --theme-secondary: var(--cyberpunk-secondary);
+  --theme-tertiary: var(--cyberpunk-tertiary);
+  --theme-background: var(--cyberpunk-background);
+  --theme-background-elevated: var(--cyberpunk-background-elevated);
+  --theme-text: var(--cyberpunk-text);
+  --theme-text-muted: var(--cyberpunk-text-muted);
+  --theme-border: var(--cyberpunk-border);
+  --theme-glow: var(--cyberpunk-glow);
+  --theme-glow-strong: var(--cyberpunk-glow-strong);
+}
+
+/* ============================================
+ * Theme Application Classes
+ * ============================================ */
+
+/* Canvas with theme background */
+.theme-canvas {
+  background-color: var(--theme-background);
+  color: var(--theme-text);
+  transition: background-color var(--duration-normal) var(--ease-out-expo),
+              color var(--duration-normal) var(--ease-out-expo);
+}
+
+/* Controls with theme styling */
+.theme-controls {
+  background-color: var(--theme-background-elevated);
+  color: var(--theme-text);
+  border-color: var(--theme-border);
+  transition: background-color var(--duration-normal) var(--ease-out-expo),
+              color var(--duration-normal) var(--ease-out-expo),
+              border-color var(--duration-normal) var(--ease-out-expo);
+}
+
+/* Glow effect elements */
+.theme-glow {
+  box-shadow: var(--theme-glow);
+  transition: box-shadow var(--duration-normal) var(--ease-out-expo);
+}
+
+.theme-glow--strong {
+  box-shadow: var(--theme-glow-strong);
+}
+
+/* Theme-colored text */
+.theme-text-primary {
+  color: var(--theme-primary);
+}
+
+.theme-text-secondary {
+  color: var(--theme-secondary);
+}
+
+.theme-text-muted {
+  color: var(--theme-text-muted);
+}
+
+/* Theme-colored borders */
+.theme-border {
+  border-color: var(--theme-border);
+}
+
+.theme-border-primary {
+  border-color: var(--theme-primary);
+}
+
+/* ============================================
+ * Theme Transitions
+ * ============================================ */
+.theme-transition {
+  transition: background-color var(--duration-normal) var(--ease-out-expo),
+              color var(--duration-normal) var(--ease-out-expo),
+              box-shadow var(--duration-normal) var(--ease-out-expo),
+              border-color var(--duration-normal) var(--ease-out-expo),
+              fill var(--duration-normal) var(--ease-out-expo),
+              stroke var(--duration-normal) var(--ease-out-expo);
+}
+
+/* ============================================
+ * Theme-Specific Enhancements
+ * ============================================ */
+
+/* Neon: Enhanced glow on interactive elements */
+[data-theme="neon"] .btn--primary {
+  box-shadow: var(--neon-glow);
+}
+
+[data-theme="neon"] .btn--primary:hover {
+  box-shadow: var(--neon-glow-strong);
+}
+
+/* Sketch: Hand-drawn feel */
+[data-theme="sketch"] .controls-panel {
+  border-style: solid;
+  box-shadow: var(--sketch-shadow-elevated);
+}
+
+[data-theme="sketch"] .control-group__slider::-webkit-slider-thumb {
+  background: var(--sketch-primary);
+  border-radius: 2px;
+}
+
+/* Firefly: Warm glow effects */
+[data-theme="firefly"] .loading-overlay__spinner {
+  border-top-color: var(--firefly-primary);
+  box-shadow: var(--firefly-glow);
+}
+
+/* Aurora: Cool glow effects */
+[data-theme="aurora"] .btn--primary {
+  box-shadow: var(--aurora-glow);
+}
+
+[data-theme="aurora"] .btn--primary:hover {
+  box-shadow: var(--aurora-glow-strong);
+}
+
+/* Cyberpunk: Dual-tone effects */
+[data-theme="cyberpunk"] .btn--primary {
+  background: linear-gradient(135deg, var(--cyberpunk-primary), var(--cyberpunk-secondary));
+  box-shadow: var(--cyberpunk-glow);
+}
+
+[data-theme="cyberpunk"] .btn--primary:hover {
+  box-shadow: var(--cyberpunk-glow-strong);
+}
+
+[data-theme="cyberpunk"] .loading-overlay {
+  background: rgba(10, 10, 15, 0.85);
+}
+
+/* ============================================
+ * Theme-Specific Focus Styles
+ * ============================================ */
+[data-theme="neon"] button:focus-visible,
+[data-theme="neon"] a:focus-visible {
+  outline-color: var(--neon-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+}
+
+[data-theme="sketch"] button:focus-visible,
+[data-theme="sketch"] a:focus-visible {
+  outline-color: var(--sketch-primary);
+  outline-offset: 3px;
+}
+
+[data-theme="firefly"] button:focus-visible,
+[data-theme="firefly"] a:focus-visible {
+  outline-color: var(--firefly-primary);
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.3);
+}
+
+[data-theme="aurora"] button:focus-visible,
+[data-theme="aurora"] a:focus-visible {
+  outline-color: var(--aurora-primary);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+}
+
+[data-theme="cyberpunk"] button:focus-visible,
+[data-theme="cyberpunk"] a:focus-visible {
+  outline-color: var(--cyberpunk-primary);
+  box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.3), 0 0 0 6px rgba(255, 0, 255, 0.15);
+}
+
+/* ============================================
+ * Theme-Specific Scrollbar
+ * ============================================ */
+[data-theme="neon"] ::-webkit-scrollbar-thumb {
+  background: var(--neon-primary);
+}
+
+[data-theme="sketch"] ::-webkit-scrollbar-thumb {
+  background: var(--sketch-secondary);
+}
+
+[data-theme="firefly"] ::-webkit-scrollbar-thumb {
+  background: var(--firefly-primary);
+}
+
+[data-theme="aurora"] ::-webkit-scrollbar-thumb {
+  background: var(--aurora-primary);
+}
+
+[data-theme="cyberpunk"] ::-webkit-scrollbar-thumb {
+  background: var(--cyberpunk-primary);
+}
+
+/* ============================================
+ * Theme-Specific Selection
+ * ============================================ */
+[data-theme="neon"] ::selection {
+  background-color: var(--neon-primary);
+}
+
+[data-theme="sketch"] ::selection {
+  background-color: var(--sketch-primary);
+  color: white;
+}
+
+[data-theme="firefly"] ::selection {
+  background-color: var(--firefly-primary);
+}
+
+[data-theme="aurora"] ::selection {
+  background-color: var(--aurora-primary);
+}
+
+[data-theme="cyberpunk"] ::selection {
+  background-color: var(--cyberpunk-primary);
+  color: black;
+}
+
+/* ============================================
+ * Responsive Theme Adjustments
+ * ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  [data-theme] {
+    transition: none;
+  }
+}

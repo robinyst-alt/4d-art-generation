@@ -1,0 +1,106 @@
+/**
+ * 4D Slice Extraction
+ *
+ * Extracts 3D slices from 4D matrices and converts to Three.js point formats
+ */
+
+/**
+ * Extract a 3D slice from a 4D matrix at a given w index
+ * @param {Float32Array} matrix - 4D matrix data [w][z][y][x][rgba]
+ * @param {number} resolution - Resolution of the matrix
+ * @param {number} wIndex - W dimension index to extract
+ * @returns {Float32Array} 3D slice data [z][y][x][rgba]
+ */
+export function extractSlice(matrix, resolution, wIndex) {
+  if (wIndex < 0 || wIndex >= resolution) {
+    throw new Error(`W index ${wIndex} out of range [0, ${resolution - 1}]`);
+  }
+
+  const sliceData = new Float32Array(Math.pow(resolution, 3) * 4);
+
+  for (let z = 0; z < resolution; z++) {
+    for (let y = 0; y < resolution; y++) {
+      for (let x = 0; x < resolution; x++) {
+        // Source index in 4D matrix
+        const srcIndex = (wIndex * resolution * resolution * resolution +
+                         z * resolution * resolution +
+                         y * resolution +
+                         x) * 4;
+
+        // Destination index in 3D slice
+        const dstIndex = (z * resolution * resolution + y * resolution + x) * 4;
+
+        sliceData[dstIndex] = matrix[srcIndex];
+        sliceData[dstIndex + 1] = matrix[srcIndex + 1];
+        sliceData[dstIndex + 2] = matrix[srcIndex + 2];
+        sliceData[dstIndex + 3] = matrix[srcIndex + 3];
+      }
+    }
+  }
+
+  return sliceData;
+}
+
+/**
+ * Extract multiple slices across a w range
+ * @param {Float32Array} matrix - 4D matrix data
+ * @param {number} resolution - Resolution of the matrix
+ * @param {Array} wRange - [start, end] w indices (inclusive)
+ * @returns {Array<Float32Array>} Array of 3D slice data
+ */
+export function extractMultipleSlices(matrix, resolution, wRange) {
+  const [start, end] = wRange;
+
+  if (start > end) {
+    return [];
+  }
+
+  const slices = [];
+  for (let w = start; w <= end; w++) {
+    slices.push(extractSlice(matrix, resolution, w));
+  }
+
+  return slices;
+}
+
+/**
+ * Convert slice data to Three.js points format
+ * @param {Float32Array} sliceData - 3D slice data [z][y][x][rgba]
+ * @param {number} resolution - Resolution of the slice
+ * @returns {Object} Object with positions and colors Float32Arrays
+ */
+export function toThreePoints(sliceData, resolution) {
+  const positions = [];
+  const colors = [];
+
+  for (let z = 0; z < resolution; z++) {
+    for (let y = 0; y < resolution; y++) {
+      for (let x = 0; x < resolution; x++) {
+        const index = (z * resolution * resolution + y * resolution + x) * 4;
+
+        // Skip transparent points
+        if (sliceData[index + 3] <= 0) {
+          continue;
+        }
+
+        // Normalize position to [-1, 1] range for Three.js
+        const nx = (x / resolution) * 2 - 1;
+        const ny = (y / resolution) * 2 - 1;
+        const nz = (z / resolution) * 2 - 1;
+
+        positions.push(nx, ny, nz);
+        colors.push(
+          sliceData[index],
+          sliceData[index + 1],
+          sliceData[index + 2],
+          sliceData[index + 3]
+        );
+      }
+    }
+  }
+
+  return {
+    positions: new Float32Array(positions),
+    colors: new Float32Array(colors)
+  };
+}

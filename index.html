@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="neon">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="4D Art - Generate mesmerizing 4D geometric shapes through an interactive WebGL experience">
+  <meta name="theme-color" content="#0a0a0f">
+
+  <title>4D Art - 4D Pixel Matrix Generator</title>
+
+  <!-- Preload critical fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Fonts: Inter for UI, JetBrains Mono for values -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Critical CSS: Base and Tokens -->
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+
+  <!-- Component CSS -->
+  <link rel="stylesheet" href="css/components.css">
+
+  <!-- Theme CSS (loaded after components for proper cascade) -->
+  <link rel="stylesheet" href="css/themes.css">
+
+  <!-- Inline critical styles for above-the-fold content -->
+  <style>
+    /* Prevent FOUC */
+    html {
+      background-color: var(--neon-background, #0a0a0f);
+    }
+
+    /* Initial loader */
+    .app-loader {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--neon-background, #0a0a0f);
+      z-index: 9999;
+      transition: opacity 0.3s ease-out;
+    }
+
+    .app-loader--hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .app-loader__spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--neon-border, #1e1b4b);
+      border-top-color: var(--neon-primary, #6366f1);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Initial loader (hidden once app initializes) -->
+  <div id="app-loader" class="app-loader" aria-hidden="true">
+    <div class="app-loader__spinner"></div>
+  </div>
+
+  <!-- Canvas Container -->
+  <div id="canvas-container" class="canvas-container theme-canvas" role="img" aria-label="4D shape visualization canvas">
+    <!-- Three.js canvas will be inserted here -->
+  </div>
+
+  <!-- Controls Panel -->
+  <aside id="controls-panel" class="controls-panel theme-controls" role="complementary" aria-label="Shape controls">
+    <header class="controls-panel__header">
+      <div class="controls-panel__title-row">
+        <div>
+          <h1 class="controls-panel__title" data-i18n="title">4D Art</h1>
+          <p class="controls-panel__subtitle" data-i18n="subtitle">4D Pixel Matrix Generator</p>
+        </div>
+        <button id="lang-toggle" class="lang-toggle" aria-label="Switch language" data-lang="en">
+          <span class="lang-toggle__label">中</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Shape Selector -->
+    <div class="control-group">
+      <label class="control-group__label" for="shape-selector" data-i18n="shape">Shape</label>
+      <select id="shape-selector" class="control-group__select" data-control="shape-selector" aria-describedby="shape-description">
+        <option value="tesseract" data-i18n="shape_tesseract">Tesseract (Hypercube)</option>
+        <option value="sphere" data-i18n="shape_sphere">4D Sphere</option>
+        <option value="octahedron" data-i18n="shape_octahedron">4D Octahedron</option>
+        <option value="dodecahedron" data-i18n="shape_dodecahedron">4D Dodecahedron</option>
+        <option value="icosahedron" data-i18n="shape_icosahedron">4D Icosahedron</option>
+        <option value="torus" data-i18n="shape_torus">4D Torus</option>
+      </select>
+      <p id="shape-description" class="visually-hidden" data-i18n="shape_description">Select a 4D geometric shape to generate</p>
+    </div>
+
+    <!-- W-Axis Slider -->
+    <div class="control-group">
+      <div class="control-group__value-row">
+        <label class="control-group__label" for="w-slider" data-i18n="w_axis">W Axis</label>
+        <span id="w-value" class="control-group__value" aria-live="polite">0</span>
+      </div>
+      <input
+        type="range"
+        id="w-slider"
+        class="control-group__slider"
+        data-control="w-slider"
+        min="0"
+        max="23"
+        value="0"
+        step="1"
+        aria-describedby="w-description"
+      >
+      <p id="w-description" class="control-group__description" data-i18n="w_description">Explore different 4D slices</p>
+    </div>
+
+    <!-- Resolution Slider -->
+    <div class="control-group">
+      <div class="control-group__value-row">
+        <label class="control-group__label" for="resolution-slider" data-i18n="resolution">Resolution</label>
+        <span id="resolution-value" class="control-group__value" aria-live="polite">24</span>
+      </div>
+      <input
+        type="range"
+        id="resolution-slider"
+        class="control-group__slider"
+        data-control="resolution"
+        min="8"
+        max="32"
+        value="24"
+        step="1"
+        aria-describedby="resolution-description"
+      >
+      <p id="resolution-description" class="control-group__description" data-i18n="resolution_description">Grid resolution (higher = more detail)</p>
+    </div>
+
+    <!-- Theme Selector -->
+    <div class="control-group">
+      <span class="control-group__label" data-i18n="color_theme">Color Theme</span>
+      <div class="theme-selector" role="radiogroup" aria-label="Select color theme">
+        <button
+          type="button"
+          class="theme-selector__option theme-selector__option--active"
+          data-theme="neon"
+          role="radio"
+          aria-checked="true"
+          aria-label="Neon theme"
+        >
+          <span class="theme-selector__swatch" style="background: linear-gradient(135deg, #6366f1, #ec4899);"></span>
+          <span class="theme-selector__label" data-i18n="theme_neon">Neon</span>
+        </button>
+        <button
+          type="button"
+          class="theme-selector__option"
+          data-theme="sketch"
+          role="radio"
+          aria-checked="false"
+          aria-label="Sketch theme"
+        >
+          <span class="theme-selector__swatch" style="background: linear-gradient(135deg, #374151, #9ca3af);"></span>
+          <span class="theme-selector__label" data-i18n="theme_sketch">Sketch</span>
+        </button>
+        <button
+          type="button"
+          class="theme-selector__option"
+          data-theme="firefly"
+          role="radio"
+          aria-checked="false"
+          aria-label="Firefly theme"
+        >
+          <span class="theme-selector__swatch" style="background: linear-gradient(135deg, #fbbf24, #f97316);"></span>
+          <span class="theme-selector__label" data-i18n="theme_firefly">Firefly</span>
+        </button>
+        <button
+          type="button"
+          class="theme-selector__option"
+          data-theme="aurora"
+          role="radio"
+          aria-checked="false"
+          aria-label="Aurora theme"
+        >
+          <span class="theme-selector__swatch" style="background: linear-gradient(135deg, #10b981, #06b6d4);"></span>
+          <span class="theme-selector__label" data-i18n="theme_aurora">Aurora</span>
+        </button>
+        <button
+          type="button"
+          class="theme-selector__option"
+          data-theme="cyberpunk"
+          role="radio"
+          aria-checked="false"
+          aria-label="Cyberpunk theme"
+        >
+          <span class="theme-selector__swatch" style="background: linear-gradient(135deg, #00ffff, #ff00ff);"></span>
+          <span class="theme-selector__label" data-i18n="theme_cyber">Cyber</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Transparency Slider -->
+    <div class="control-group">
+      <div class="control-group__value-row">
+        <label class="control-group__label" for="transparency-slider" data-i18n="transparency">Transparency</label>
+        <span id="transparency-value" class="control-group__value" aria-live="polite">100%</span>
+      </div>
+      <input
+        type="range"
+        id="transparency-slider"
+        class="control-group__slider"
+        data-control="transparency"
+        min="0"
+        max="100"
+        value="100"
+        step="1"
+        aria-describedby="transparency-description"
+      >
+      <p id="transparency-description" class="control-group__description" data-i18n="transparency_description">Adjust point cloud opacity</p>
+    </div>
+
+    <!-- Shape Info -->
+    <div class="shape-info" aria-live="polite">
+      <h2 class="shape-info__title" data-i18n="current_shape">Current Shape</h2>
+      <dl class="shape-info__list">
+        <div class="shape-info__item">
+          <dt class="shape-info__label" data-i18n="info_resolution">Resolution</dt>
+          <dd class="shape-info__value" id="info-resolution">24</dd>
+        </div>
+        <div class="shape-info__item">
+          <dt class="shape-info__label" data-i18n="info_points">Points</dt>
+          <dd class="shape-info__value" id="info-points">13,824</dd>
+        </div>
+        <div class="shape-info__item">
+          <dt class="shape-info__label" data-i18n="info_hash">Hash</dt>
+          <dd class="shape-info__value" id="info-hash">-</dd>
+        </div>
+      </dl>
+    </div>
+
+    <!-- Keyboard Shortcuts -->
+    <nav class="shortcuts-hint" aria-label="Keyboard shortcuts">
+      <h3 class="shortcuts-hint__title" data-i18n="shortcuts">Shortcuts</h3>
+      <ul class="shortcuts-hint__list">
+        <li class="shortcuts-hint__item">
+          <span class="shortcuts-hint__key" aria-hidden="true">←</span>
+          <span class="shortcuts-hint__key" aria-hidden="true">→</span>
+          <span class="shortcuts-hint__action" data-i18n="shortcut_nav">Navigate W axis</span>
+        </li>
+        <li class="shortcuts-hint__item">
+          <span class="shortcuts-hint__key" aria-hidden="true">1-6</span>
+          <span class="shortcuts-hint__action" data-i18n="shortcut_shape">Select shape</span>
+        </li>
+        <li class="shortcuts-hint__item">
+          <span class="shortcuts-hint__key" aria-hidden="true">T</span>
+          <span class="shortcuts-hint__action" data-i18n="shortcut_theme">Cycle theme</span>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Loading Overlay (for async operations) -->
+  <div id="loading-overlay" class="loading-overlay" role="status" aria-label="Loading" aria-hidden="true">
+    <div class="loading-overlay__spinner"></div>
+    <p class="loading-overlay__text" data-i18n="loading">Generating...</p>
+  </div>
+
+  <!-- Three.js ES Module (local vendor) -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three/three.module.js",
+        "three/addons/": "./vendor/three/jsm/"
+      }
+    }
+  </script>
+
+  <!-- Application Entry Point -->
+  <script type="module" src="js/main.js"></script>
+
+  <!-- No-JS Fallback -->
+  <noscript>
+    <style>
+      .app-loader { display: none; }
+      .controls-panel { display: none; }
+      #canvas-container::after {
+        content: 'JavaScript is required to run this application. Please enable JavaScript in your browser settings.';
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        padding: 2rem;
+        text-align: center;
+        color: var(--neon-text, #e0e7ff);
+      }
+    </style>
+  </noscript>
+
+  <!-- SVG Favicon -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+    <symbol id="favicon-tesseract" viewBox="0 0 32 32">
+      <rect x="4" y="4" width="24" height="24" fill="none" stroke="#6366f1" stroke-width="2"/>
+      <rect x="8" y="8" width="16" height="16" fill="none" stroke="#ec4899" stroke-width="2"/>
+      <line x1="4" y1="4" x2="8" y2="8" stroke="#6366f1" stroke-width="2"/>
+      <line x1="28" y1="4" x2="24" y2="8" stroke="#6366f1" stroke-width="2"/>
+      <line x1="4" y1="28" x2="8" y2="24" stroke="#6366f1" stroke-width="2"/>
+      <line x1="28" y1="28" x2="24" y2="24" stroke="#6366f1" stroke-width="2"/>
+    </symbol>
+  </svg>
+</body>
+</html>
