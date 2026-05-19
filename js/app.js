@@ -31,7 +31,8 @@ const DEFAULT_STATE = {
   resolution: 24,
   colorTheme: 'neon',
   isRendering: false,
-  matrix: null
+  matrix: null,
+  pointSpacing: 0
 };
 
 /**
@@ -137,6 +138,12 @@ export function createApp(initialState = {}) {
       const extracted = extractMultiAxisSlice(matrix, quadrantState);
       const pointsData = toThreePoints(extracted.data, resolution, extracted.dimensions);
 
+      // Apply point spacing multiplier
+      const spacingMultiplier = (stateContainer.getState().pointSpacing || 0) + 1;
+      for (let i = 0; i < pointsData.positions.length; i++) {
+        pointsData.positions[i] *= spacingMultiplier;
+      }
+
       // Remove old points if exists
       if (currentPoints) {
         clearScene(scene);
@@ -171,6 +178,12 @@ export function createApp(initialState = {}) {
 
     // Convert to Three.js points format
     const pointsData = toThreePoints(sliceData, resolution);
+
+    // Apply point spacing multiplier
+    const spacingMultiplier = (stateContainer.getState().pointSpacing || 0) + 1;
+    for (let i = 0; i < pointsData.positions.length; i++) {
+      pointsData.positions[i] *= spacingMultiplier;
+    }
 
     // Remove old points if exists
     if (currentPoints) {
@@ -273,6 +286,17 @@ export function createApp(initialState = {}) {
     if (update.colorTheme && update.colorTheme !== currentState.colorTheme) {
       setTheme(update.colorTheme);
       updated = true;
+    }
+
+    // Handle point spacing change
+    if (typeof update.pointSpacing === 'number' && update.pointSpacing !== currentState.pointSpacing) {
+      dispatch(stateContainer, { type: ACTIONS.SET_POINT_SPACING, payload: update.pointSpacing });
+      updated = true;
+      // Re-render with new spacing
+      const state = stateContainer.getState();
+      if (state.matrix) {
+        updateSlice(state.matrix, state.resolution, state.wValue);
+      }
     }
 
     return updated;

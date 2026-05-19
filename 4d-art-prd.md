@@ -88,7 +88,7 @@ setupQuadrantControls()  // 四象限控制初始化
 **Phase 1 已修复的问题**：
 - 切片提取：现已支持任意轴组合切片（之前仅支持 w+y, w+y+z）
 - 多轴切片切换：现已支持切片数量调整和切片轴切换（之前 UI 不响应）
-- F-108 实现：mode toggle 现在正确同步 UI 状态，支持任意轴作为切片
+- F-104 实现：mode toggle 现在正确同步 UI 状态，支持任意轴作为切片
 - Dodecahedron/Icosahedron：已修复 SDF 实现
 - Torus 颜色常量：已修复颜色数组访问问题
 - 默认状态统一：xyzw 初始值统一为 12
@@ -234,25 +234,24 @@ setupQuadrantControls()  // 四象限控制初始化
 | 输入 | 物体类型 + 参数 + 时间戳 + 随机种子 |
 | 格式 | 如: `a7f3b2c9d8e1` |
 
-#### F-108: 四象限切片面板 (P0)
-同时控制 xyzw 四个维度的切片/自由状态，实现多切片探索
+#### F-107: 像素点密度控制 (P0)
+调整像素点之间的距离，使画面变得紧凑或稀疏
 
 | 字段 | 值 |
 |------|---|
-| 象限数量 | 4 个 (x, y, z, w) |
-| 模式 | 切片 / 自由 (每个轴独立选择) |
-| 切片数量 | 至少 1 个 |
-| 切片值范围 | [0-23]，整数 |
-| 默认状态 | w=0 唯一切片，xyz 自由轴 |
+| 密度等级 | 0, 1, 2, 3, 4, 5（共 6 档） |
+| Level 0 | 默认间距（无缩放） |
+| Level 1-5 | 默认距离的倍数（2x, 3x, 4x, 5x, 6x） |
+| 实现方式 | 对点坐标应用 `(level + 1)` 缩放因子 |
 
-**切片/自由交互逻辑**：
+**实现原理**：
+- 通过将点的 XYZ 坐标乘以 `(level + 1)` 来缩放位置
+- 点从中心向外扩散，创建更稀疏的视觉效果
+- 保持点数不变，仅改变分布密度
 
-| 切片数量 | 切片轴 | 自由轴 | 3D 视图 |
-|---------|--------|--------|---------|
-| 1 | w=0 | xyz | XYZ 自由旋转（不变形） |
-| 1 | w=10 | xyz | XYZ 图形变形 |
-| 2 | w=0, y=7 | xz | XZ 平面（可自由旋转） |
-| 3 | w=0, y=7, z=15 | x | X 轴线条 |
+**状态定义**：
+- `pointSpacing`: number — 密度等级 [0-5]
+- 默认值: 0
 
 **UI 组件设计**：
 
@@ -933,10 +932,10 @@ async function generateContentHash(data) {
 | F-101 | 4D 物体选择器 | `js/ui/controls.js` | **已实现** |
 | F-102 | 截图按钮 | `js/render/renderer.js` | **已实现** |
 | F-103 | 4D 数据生成器 | `js/fourD/generators.js` | **已实现** |
-| F-104 | 四象限控制交互 | `js/quadrant/axisControl.js`, `js/quadrant/controls.js` | **已实现** |
+| F-104 | 四象限切片控制（含 UI 面板） | `css/components.css`, `index.html`, `js/main.js`, `js/quadrant/controls.js`, `js/quadrant/stateManager.js` | **已实现** |
 | F-105 | Three.js 3D 渲染器 | `js/render/scene.js`, `js/render/renderer.js`, `js/quadrant/projection.js` | **已实现** |
 | F-106 | Content Hash 生成 | `js/utils/hash.js` | **已实现** |
-| F-108 | 四象限控制面板 | `css/components.css` (样式), `index.html` (面板), `js/main.js` (集成), `js/quadrant/controls.js`, `js/quadrant/stateManager.js` | **已实现** |
+| F-107 | 像素点密度控制 | `js/app.js`, `js/ui/state.js` | **已实现** |
 
 ### Phase 1 已修复的关键问题
 

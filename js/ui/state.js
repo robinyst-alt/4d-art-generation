@@ -12,7 +12,8 @@ export const ACTIONS = {
   SET_SHAPE: 'SET_SHAPE',
   SET_W_VALUE: 'SET_W_VALUE',
   SET_RENDERING: 'SET_RENDERING',
-  SET_MATRIX: 'SET_MATRIX'
+  SET_MATRIX: 'SET_MATRIX',
+  SET_POINT_SPACING: 'SET_POINT_SPACING'
 };
 
 // State subscribers
@@ -61,6 +62,10 @@ export function dispatch(stateContainer, action) {
 
     case ACTIONS.SET_MATRIX:
       newState = { ...currentState, matrix: action.payload };
+      break;
+
+    case ACTIONS.SET_POINT_SPACING:
+      newState = { ...currentState, pointSpacing: action.payload };
       break;
 
     default:
