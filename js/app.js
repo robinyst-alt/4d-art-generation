@@ -15,6 +15,7 @@ import { createCamera, enableControls, setPosition, setFOV, lookAt, updateContro
 import { createRenderer, render, setAnimationLoop, startAnimationLoop, stopAnimationLoop, resizeToFit, captureScreenshot } from './render/renderer.js';
 import { extractSlice, toThreePoints } from './fourD/slice.js';
 import { generate } from './fourD/generators.js';
+import { extractMultiAxisSlice } from './quadrant/stateManager.js';
 
 /**
  * Valid theme names
@@ -123,15 +124,51 @@ export function createApp(initialState = {}) {
    * Update the displayed slice with new matrix data
    * @param {Float32Array} matrix - 4D matrix data
    * @param {number} resolution - Resolution of the matrix
-   * @param {number} wIndex - W-axis index to display
+   * @param {number} wIndex - W-axis index to display (legacy, kept for compatibility)
+   * @param {Object} quadrantState - Optional quadrant state for multi-axis slicing
    * @returns {boolean} Success status
    */
-  function updateSlice(matrix, resolution, wIndex) {
+  function updateSlice(matrix, resolution, wIndex, quadrantState = null) {
     if (!matrix) {
       return false;
     }
 
-    // Extract 3D slice from 4D matrix
+    // Use multi-axis slice extraction if quadrant state provided
+    if (quadrantState) {
+      const extracted = extractMultiAxisSlice(matrix, quadrantState);
+      const pointsData = toThreePoints(extracted.data, resolution);
+
+      // Remove old points if exists
+      if (currentPoints) {
+        clearScene(scene);
+        currentPoints = null;
+      }
+
+      // Create new points geometry
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.BufferAttribute(pointsData.positions, 3));
+
+      if (pointsData.colors && pointsData.colors.length > 0) {
+        geometry.setAttribute('color', new THREE.BufferAttribute(pointsData.colors, 4));
+      }
+
+      const state = stateContainer.getState();
+      const opacity = state.transparency / 100;
+      const material = new THREE.PointsMaterial({
+        size: 0.15,
+        vertexColors: true,
+        transparent: true,
+        opacity: Math.max(0.3, opacity),
+        sizeAttenuation: true
+      });
+
+      currentPoints = new THREE.Points(geometry, material);
+      addMesh(scene, currentPoints);
+
+      return true;
+    }
+
+    // Legacy single-slice extraction
     const sliceData = extractSlice(matrix, resolution, wIndex);
 
     // Convert to Three.js points format

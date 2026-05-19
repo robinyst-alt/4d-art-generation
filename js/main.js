@@ -308,7 +308,13 @@ function setupQuadrantControls() {
   ['x', 'y', 'z', 'w'].forEach(axis => {
     // Mode toggle
     onAxisChange(quadrantControls, axis, 'mode', (newMode) => {
+      const prevState = quadrantState;
       quadrantState = setAxisMode(quadrantState, axis, newMode);
+
+      // Sync UI with validated state (handles constraint blocking)
+      const actualMode = quadrantState.axes[axis].mode;
+      updateAxisDisplay(quadrantControls, axis, { mode: actualMode });
+
       updateSliceFromQuadrantState();
     });
 
@@ -322,6 +328,7 @@ function setupQuadrantControls() {
 
 /**
  * Update slice from quadrant state
+ * Extracts multi-axis slice and updates the 3D scene
  */
 function updateSliceFromQuadrantState() {
   if (!appInstance || !quadrantState || !matrix) return;
@@ -329,10 +336,19 @@ function updateSliceFromQuadrantState() {
   const state = appInstance.getState();
   const extracted = extractMultiAxisSlice(matrix, quadrantState);
 
-  // The extracted data needs to be converted to display format
-  // This would require updating the scene rendering to handle multi-axis slices
-  // For now, we update the UI to reflect the state
-  console.log('Quadrant state updated:', quadrantState.axes);
+  // Update the app's wValue to reflect the primary slice axis
+  const sliceAxes = Object.entries(quadrantState.axes)
+    .filter(([_, a]) => a.mode === 'slice')
+    .map(([axis, _]) => axis);
+
+  if (sliceAxes.length > 0) {
+    // Use the first slice axis as primary for the rendering
+    const primarySliceAxis = sliceAxes[0];
+    const sliceValue = quadrantState.axes[primarySliceAxis].sliceValue;
+
+    // Update the app state with the new slice
+    appInstance.updateSlice(matrix, state.resolution, sliceValue, quadrantState);
+  }
 }
 
 /**
