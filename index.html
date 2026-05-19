@@ -136,108 +136,6 @@
       </div>
     </div>
 
-    <!-- Resolution Slider -->
-    <div class="control-group">
-      <div class="control-group__value-row">
-        <label class="control-group__label" for="resolution-slider" data-i18n="resolution">Resolution</label>
-        <span id="resolution-value" class="control-group__value" aria-live="polite">24</span>
-      </div>
-      <input
-        type="range"
-        id="resolution-slider"
-        class="control-group__slider"
-        data-control="resolution"
-        min="8"
-        max="32"
-        value="24"
-        step="1"
-        aria-describedby="resolution-description"
-      >
-      <p id="resolution-description" class="control-group__description" data-i18n="resolution_description">Grid resolution (higher = more detail)</p>
-    </div>
-
-    <!-- Theme Selector -->
-    <div class="control-group">
-      <span class="control-group__label" data-i18n="color_theme">Color Theme</span>
-      <div class="theme-selector" role="radiogroup" aria-label="Select color theme">
-        <button
-          type="button"
-          class="theme-selector__option theme-selector__option--active"
-          data-theme="neon"
-          role="radio"
-          aria-checked="true"
-          aria-label="Neon theme"
-        >
-          <span class="theme-selector__swatch" style="background: linear-gradient(135deg, #6366f1, #ec4899);"></span>
-          <span class="theme-selector__label" data-i18n="theme_neon">Neon</span>
-        </button>
-        <button
-          type="button"
-          class="theme-selector__option"
-          data-theme="sketch"
-          role="radio"
-          aria-checked="false"
-          aria-label="Sketch theme"
-        >
-          <span class="theme-selector__swatch" style="background: linear-gradient(135deg, #374151, #9ca3af);"></span>
-          <span class="theme-selector__label" data-i18n="theme_sketch">Sketch</span>
-        </button>
-        <button
-          type="button"
-          class="theme-selector__option"
-          data-theme="firefly"
-          role="radio"
-          aria-checked="false"
-          aria-label="Firefly theme"
-        >
-          <span class="theme-selector__swatch" style="background: linear-gradient(135deg, #fbbf24, #f97316);"></span>
-          <span class="theme-selector__label" data-i18n="theme_firefly">Firefly</span>
-        </button>
-        <button
-          type="button"
-          class="theme-selector__option"
-          data-theme="aurora"
-          role="radio"
-          aria-checked="false"
-          aria-label="Aurora theme"
-        >
-          <span class="theme-selector__swatch" style="background: linear-gradient(135deg, #10b981, #06b6d4);"></span>
-          <span class="theme-selector__label" data-i18n="theme_aurora">Aurora</span>
-        </button>
-        <button
-          type="button"
-          class="theme-selector__option"
-          data-theme="cyberpunk"
-          role="radio"
-          aria-checked="false"
-          aria-label="Cyberpunk theme"
-        >
-          <span class="theme-selector__swatch" style="background: linear-gradient(135deg, #00ffff, #ff00ff);"></span>
-          <span class="theme-selector__label" data-i18n="theme_cyber">Cyber</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Transparency Slider -->
-    <div class="control-group">
-      <div class="control-group__value-row">
-        <label class="control-group__label" for="transparency-slider" data-i18n="transparency">Transparency</label>
-        <span id="transparency-value" class="control-group__value" aria-live="polite">100%</span>
-      </div>
-      <input
-        type="range"
-        id="transparency-slider"
-        class="control-group__slider"
-        data-control="transparency"
-        min="0"
-        max="100"
-        value="100"
-        step="1"
-        aria-describedby="transparency-description"
-      >
-      <p id="transparency-description" class="control-group__description" data-i18n="transparency_description">Adjust point cloud opacity</p>
-    </div>
-
     <!-- Shape Info -->
     <div class="shape-info" aria-live="polite">
       <h2 class="shape-info__title" data-i18n="current_shape">Current Shape</h2>
@@ -269,10 +167,6 @@
         <li class="shortcuts-hint__item">
           <span class="shortcuts-hint__key" aria-hidden="true">1-6</span>
           <span class="shortcuts-hint__action" data-i18n="shortcut_shape">Select shape</span>
-        </li>
-        <li class="shortcuts-hint__item">
-          <span class="shortcuts-hint__key" aria-hidden="true">T</span>
-          <span class="shortcuts-hint__action" data-i18n="shortcut_theme">Cycle theme</span>
         </li>
       </ul>
     </nav>

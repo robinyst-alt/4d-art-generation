@@ -9,7 +9,7 @@
  */
 
 import * as THREE from 'three';
-import { createState, dispatch, subscribe, ACTIONS, COLOR_THEMES } from './ui/state.js';
+import { createState, dispatch, subscribe, ACTIONS } from './ui/state.js';
 import { createScene, addMesh, updateGeometry, clearScene, setSceneLighting } from './render/scene.js';
 import { createCamera, enableControls, setPosition, setFOV, lookAt, updateControls } from './render/camera.js';
 import { createRenderer, render, setAnimationLoop, startAnimationLoop, stopAnimationLoop, resizeToFit, captureScreenshot } from './render/renderer.js';
@@ -31,7 +31,6 @@ const DEFAULT_STATE = {
   resolution: 24,
   colorTheme: 'neon',
   isRendering: false,
-  transparency: 100,
   matrix: null
 };
 
@@ -153,12 +152,11 @@ export function createApp(initialState = {}) {
       }
 
       const state = stateContainer.getState();
-      const opacity = state.transparency / 100;
       const material = new THREE.PointsMaterial({
         size: 0.15,
         vertexColors: true,
         transparent: true,
-        opacity: Math.max(0.3, opacity),
+        opacity: 1.0,
         sizeAttenuation: true
       });
 
@@ -189,13 +187,11 @@ export function createApp(initialState = {}) {
     }
 
     // Create material
-    const state = stateContainer.getState();
-    const opacity = state.transparency / 100;
     const material = new THREE.PointsMaterial({
       size: 0.15,
       vertexColors: true,
       transparent: true,
-      opacity: Math.max(0.3, opacity),
+      opacity: 1.0,
       sizeAttenuation: true
     });
 
@@ -277,17 +273,6 @@ export function createApp(initialState = {}) {
     if (update.colorTheme && update.colorTheme !== currentState.colorTheme) {
       setTheme(update.colorTheme);
       updated = true;
-    }
-
-    // Handle transparency change
-    if (typeof update.transparency === 'number' && update.transparency !== currentState.transparency) {
-      dispatch(stateContainer, { type: ACTIONS.SET_TRANSPARENCY, payload: update.transparency });
-      updated = true;
-      // Update material
-      if (currentPoints && currentPoints.material) {
-        currentPoints.material.opacity = update.transparency / 100;
-        currentPoints.material.transparent = update.transparency < 100;
-      }
     }
 
     return updated;

@@ -15,9 +15,7 @@ describe('State Management', () => {
       currentShape: 'tesseract',
       wValue: 0,
       resolution: 24,
-      isRendering: false,
-      colorTheme: 'neon',
-      transparency: 100
+      isRendering: false
     };
     state = createState(initialState);
   });
@@ -36,9 +34,7 @@ describe('State Management', () => {
         currentShape: 'tesseract',
         wValue: 0,
         resolution: 24,
-        isRendering: false,
-        colorTheme: 'neon',
-        transparency: 100
+        isRendering: false
       });
     });
   });
@@ -56,28 +52,10 @@ describe('State Management', () => {
       expect(result.wValue).toBe(12);
     });
 
-    test('should update resolution via dispatch', () => {
-      const result = dispatch(state, { type: 'SET_RESOLUTION', payload: 32 });
-
-      expect(result.resolution).toBe(32);
-    });
-
     test('should update isRendering via dispatch', () => {
       const result = dispatch(state, { type: 'SET_RENDERING', payload: true });
 
       expect(result.isRendering).toBe(true);
-    });
-
-    test('should update colorTheme via dispatch', () => {
-      const result = dispatch(state, { type: 'SET_COLOR_THEME', payload: 'cyberpunk' });
-
-      expect(result.colorTheme).toBe('cyberpunk');
-    });
-
-    test('should update transparency via dispatch', () => {
-      const result = dispatch(state, { type: 'SET_TRANSPARENCY', payload: 50 });
-
-      expect(result.transparency).toBe(50);
     });
 
     test('should handle unknown action type gracefully', () => {

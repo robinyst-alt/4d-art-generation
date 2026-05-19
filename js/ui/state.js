@@ -11,10 +11,7 @@
 export const ACTIONS = {
   SET_SHAPE: 'SET_SHAPE',
   SET_W_VALUE: 'SET_W_VALUE',
-  SET_RESOLUTION: 'SET_RESOLUTION',
   SET_RENDERING: 'SET_RENDERING',
-  SET_COLOR_THEME: 'SET_COLOR_THEME',
-  SET_TRANSPARENCY: 'SET_TRANSPARENCY',
   SET_MATRIX: 'SET_MATRIX'
 };
 
@@ -58,20 +55,8 @@ export function dispatch(stateContainer, action) {
       newState = { ...currentState, wValue: action.payload };
       break;
 
-    case ACTIONS.SET_RESOLUTION:
-      newState = { ...currentState, resolution: action.payload };
-      break;
-
     case ACTIONS.SET_RENDERING:
       newState = { ...currentState, isRendering: action.payload };
-      break;
-
-    case ACTIONS.SET_COLOR_THEME:
-      newState = { ...currentState, colorTheme: action.payload };
-      break;
-
-    case ACTIONS.SET_TRANSPARENCY:
-      newState = { ...currentState, transparency: action.payload };
       break;
 
     case ACTIONS.SET_MATRIX:
@@ -106,37 +91,3 @@ export function subscribe(stateContainer, callback) {
     subscribers.delete(callback);
   };
 }
-
-// Export color themes
-export const COLOR_THEMES = {
-  neon: {
-    name: 'Neon',
-    primary: '#6366f1',
-    secondary: '#ec4899',
-    background: '#0a0a0f'
-  },
-  sketch: {
-    name: 'Sketch',
-    primary: '#374151',
-    secondary: '#9ca3af',
-    background: '#f9fafb'
-  },
-  firefly: {
-    name: 'Firefly',
-    primary: '#fbbf24',
-    secondary: '#f97316',
-    background: '#0a0a0f'
-  },
-  aurora: {
-    name: 'Aurora',
-    primary: '#10b981',
-    secondary: '#06b6d4',
-    background: '#0a0a0f'
-  },
-  cyberpunk: {
-    name: 'Cyberpunk',
-    primary: '#00ffff',
-    secondary: '#ff00ff',
-    background: '#0a0a0f'
-  }
-};

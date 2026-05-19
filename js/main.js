@@ -158,16 +158,6 @@ const TRANSLATIONS = {
     shape_description: 'Select a 4D geometric shape to generate',
     w_axis: 'W Axis',
     w_description: 'Explore different 4D slices',
-    resolution: 'Resolution',
-    resolution_description: 'Grid resolution (higher = more detail)',
-    color_theme: 'Color Theme',
-    theme_neon: 'Neon',
-    theme_sketch: 'Sketch',
-    theme_firefly: 'Firefly',
-    theme_aurora: 'Aurora',
-    theme_cyber: 'Cyber',
-    transparency: 'Transparency',
-    transparency_description: 'Adjust point cloud opacity',
     current_shape: 'Current Shape',
     info_resolution: 'Resolution',
     info_points: 'Points',
@@ -175,7 +165,6 @@ const TRANSLATIONS = {
     shortcuts: 'Shortcuts',
     shortcut_nav: 'Navigate W axis',
     shortcut_shape: 'Select shape',
-    shortcut_theme: 'Cycle theme',
     loading: 'Generating...'
   },
   zh: {
@@ -191,16 +180,6 @@ const TRANSLATIONS = {
     shape_description: '选择一个 4D 几何形状来生成',
     w_axis: 'W 轴',
     w_description: '探索不同的 4D 切片',
-    resolution: '分辨率',
-    resolution_description: '网格分辨率（越高 = 更多细节）',
-    color_theme: '颜色主题',
-    theme_neon: '霓虹',
-    theme_sketch: '素描',
-    theme_firefly: '萤火虫',
-    theme_aurora: '极光',
-    theme_cyber: '赛博',
-    transparency: '透明度',
-    transparency_description: '调整点云不透明度',
     current_shape: '当前形状',
     info_resolution: '分辨率',
     info_points: '点数',
@@ -208,7 +187,6 @@ const TRANSLATIONS = {
     shortcuts: '快捷键',
     shortcut_nav: '导航 W 轴',
     shortcut_shape: '选择形状',
-    shortcut_theme: '循环主题',
     loading: '生成中...'
   }
 };
@@ -375,47 +353,6 @@ function setupControls() {
       }
     });
   }
-
-  // Resolution slider
-  const resolutionSlider = document.getElementById('resolution-slider');
-  const resolutionValue = document.getElementById('resolution-value');
-  if (resolutionSlider) {
-    resolutionSlider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      if (resolutionValue) resolutionValue.textContent = value;
-      appInstance.update({ resolution: value });
-    });
-  }
-
-  // Transparency slider
-  const transparencySlider = document.getElementById('transparency-slider');
-  const transparencyValue = document.getElementById('transparency-value');
-  if (transparencySlider) {
-    transparencySlider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      if (transparencyValue) transparencyValue.textContent = `${value}%`;
-      appInstance.update({ transparency: value });
-    });
-  }
-
-  // Theme selector buttons
-  const themeButtons = document.querySelectorAll('[data-theme]');
-  themeButtons.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const theme = e.currentTarget.dataset.theme;
-      // Update active state
-      themeButtons.forEach(b => {
-        b.classList.remove('theme-selector__option--active');
-        b.setAttribute('aria-checked', 'false');
-      });
-      e.currentTarget.classList.add('theme-selector__option--active');
-      e.currentTarget.setAttribute('aria-checked', 'true');
-      // Apply theme
-      appInstance.setTheme(theme);
-      document.documentElement.setAttribute('data-theme', theme);
-      localStorage.setItem('4d-art-theme', theme);
-    });
-  });
 }
 
 /**
@@ -492,18 +429,6 @@ function handleKeyboardShortcuts(event) {
 
     case '6':
       appInstance.update({ currentShape: 'torus' });
-      break;
-
-    case 't':
-    case 'T':
-      // Cycle through themes
-      const themes = ['neon', 'sketch', 'firefly', 'aurora', 'cyberpunk'];
-      const state = appInstance.getState();
-      const currentIndex = themes.indexOf(state.colorTheme);
-      const nextTheme = themes[(currentIndex + 1) % themes.length];
-      appInstance.setTheme(nextTheme);
-      document.documentElement.setAttribute('data-theme', nextTheme);
-      localStorage.setItem('4d-art-theme', nextTheme);
       break;
   }
 }
