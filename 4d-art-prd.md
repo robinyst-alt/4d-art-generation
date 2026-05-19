@@ -87,9 +87,12 @@ setupQuadrantControls()  // 四象限控制初始化
 
 **Phase 1 已修复的问题**：
 - 切片提取：现已支持任意轴组合切片（之前仅支持 w+y, w+y+z）
+- 多轴切片切换：现已支持切片数量调整和切片轴切换（之前 UI 不响应）
+- F-108 实现：mode toggle 现在正确同步 UI 状态，支持任意轴作为切片
 - Dodecahedron/Icosahedron：已修复 SDF 实现
 - Torus 颜色常量：已修复颜色数组访问问题
-- 默认状态统一：xyzu 初始值统一为 12
+- 默认状态统一：xyzw 初始值统一为 12
+- toThreePoints 维度支持：现已支持 1D/2D/3D 切片坐标映射
 
 ---
 
