@@ -16,6 +16,7 @@ import { createRenderer, render, setAnimationLoop, startAnimationLoop, stopAnima
 import { extractSlice, toThreePoints } from './fourD/slice.js';
 import { generate } from './fourD/generators.js';
 import { extractMultiAxisSlice } from './quadrant/stateManager.js';
+import { generateContentHash } from './utils/hash.js';
 
 /**
  * Valid theme names
@@ -32,7 +33,8 @@ const DEFAULT_STATE = {
   colorTheme: 'neon',
   isRendering: false,
   matrix: null,
-  pointSpacing: 0
+  pointSpacing: 0,
+  contentHash: null
 };
 
 /**
@@ -106,13 +108,21 @@ export function createApp(initialState = {}) {
 
   /**
    * Generate a new shape and update the scene
-   * @returns {Float32Array} Generated 4D matrix data
+   * @returns {Promise<Float32Array>} Generated 4D matrix data
    */
-  function generateShape() {
+  async function generateShape() {
     const state = stateContainer.getState();
     const matrix = generate(state.currentShape, { resolution: state.resolution });
 
     dispatch(stateContainer, { type: ACTIONS.SET_MATRIX, payload: matrix });
+
+    // Generate content hash
+    const hash = await generateContentHash({
+      type: state.currentShape,
+      params: { resolution: state.resolution },
+      timestamp: Date.now()
+    });
+    dispatch(stateContainer, { type: ACTIONS.SET_CONTENT_HASH, payload: hash });
 
     // Update the visible slice
     updateSlice(matrix, state.resolution, state.wValue);
@@ -345,6 +355,30 @@ export function createApp(initialState = {}) {
     controls = null;
   }
 
+  /**
+   * Take a screenshot and trigger download
+   * @param {string} [filename] - Optional filename for download
+   */
+  function takeScreenshot(filename = null) {
+    if (!renderer) return false;
+
+    const timestamp = Date.now();
+    const name = filename || `4d-art-${timestamp}`;
+    const dataUrl = captureScreenshot(renderer, 'image/png');
+
+    if (!dataUrl) return false;
+
+    // Create download link
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = `${name}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    return true;
+  }
+
   // Return public API
   return {
     init,
@@ -355,6 +389,7 @@ export function createApp(initialState = {}) {
     getState,
     start,
     stop,
-    destroy
+    destroy,
+    takeScreenshot
   };
 }

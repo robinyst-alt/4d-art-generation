@@ -38,7 +38,7 @@ let initialized = false;
  * Initialize the application
  * @returns {Function} Cleanup function to tear down the application
  */
-export function initApp() {
+export async function initApp() {
   if (initialized && appInstance) {
     return cleanupApp;
   }
@@ -64,7 +64,10 @@ export function initApp() {
   appInstance.init(canvasContainer);
 
   // Generate initial shape
-  matrix = appInstance.generate();
+  matrix = await appInstance.generate();
+
+  // Update hash display
+  updateHashDisplay();
 
   // Set initial quadrant state to middle of range
   const initialSliceValue = Math.floor(24 / 2);
@@ -89,6 +92,19 @@ export function initApp() {
   }
 
   return cleanupApp;
+}
+
+/**
+ * Update hash display in UI
+ */
+function updateHashDisplay() {
+  const hashElement = document.getElementById('info-hash');
+  if (hashElement && appInstance) {
+    const state = appInstance.getState();
+    if (state.contentHash) {
+      hashElement.textContent = state.contentHash;
+    }
+  }
 }
 
 /**
@@ -127,9 +143,9 @@ export function getCanvasContainer() {
 /**
  * Handle DOM content loaded
  */
-function onDOMContentLoaded() {
+async function onDOMContentLoaded() {
   // Initialize app after DOM is ready
-  initApp();
+  await initApp();
 
   // Set up language toggle (must be after initApp to ensure DOM is ready)
   setupLanguageToggle();
@@ -165,6 +181,7 @@ const TRANSLATIONS = {
     shortcuts: 'Shortcuts',
     shortcut_nav: 'Navigate W axis',
     shortcut_shape: 'Select shape',
+    screenshot: 'Save Image',
     loading: 'Generating...'
   },
   zh: {
@@ -187,6 +204,7 @@ const TRANSLATIONS = {
     shortcuts: '快捷键',
     shortcut_nav: '导航 W 轴',
     shortcut_shape: '选择形状',
+    screenshot: '保存图片',
     loading: '生成中...'
   }
 };
@@ -350,6 +368,16 @@ function setupControls() {
           const defaultValue = axis === 'w' ? 0 : 12;
           updateAxisDisplay(quadrantControls, axis, { mode: defaultMode, sliceValue: defaultValue });
         });
+      }
+    });
+  }
+
+  // Screenshot button
+  const screenshotBtn = document.getElementById('screenshot-btn');
+  if (screenshotBtn) {
+    screenshotBtn.addEventListener('click', () => {
+      if (appInstance) {
+        appInstance.takeScreenshot();
       }
     });
   }

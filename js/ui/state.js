@@ -13,7 +13,8 @@ export const ACTIONS = {
   SET_W_VALUE: 'SET_W_VALUE',
   SET_RENDERING: 'SET_RENDERING',
   SET_MATRIX: 'SET_MATRIX',
-  SET_POINT_SPACING: 'SET_POINT_SPACING'
+  SET_POINT_SPACING: 'SET_POINT_SPACING',
+  SET_CONTENT_HASH: 'SET_CONTENT_HASH'
 };
 
 // State subscribers
@@ -66,6 +67,10 @@ export function dispatch(stateContainer, action) {
 
     case ACTIONS.SET_POINT_SPACING:
       newState = { ...currentState, pointSpacing: action.payload };
+      break;
+
+    case ACTIONS.SET_CONTENT_HASH:
+      newState = { ...currentState, contentHash: action.payload };
       break;
 
     default:
