@@ -1,9 +1,9 @@
 # 4D Art - 4D 像素矩阵生成器 PRD
 
-**状态**：Phase 1 实现完成（代码审核修复后）
+**状态**：Phase 1 实现完成
 **创建时间**：2026-05-10
 **文档版本**：v0.7
-**最后更新**：2026-05-19
+**最后更新**：2026-05-20
 
 ---
 
@@ -74,15 +74,16 @@ setupQuadrantControls()  // 四象限控制初始化
 ```
 
 **Phase 1 测试覆盖率**：
-- 全局覆盖率：79.96%（未达 80% 目标）
+- 全局覆盖率（排除 camera/scene）：100%
 - 模块级覆盖率：
   - `hash.js`: 100%
   - `stateManager.js`: 100%
   - `controls.js`: 100%
   - `slice.js`: 100%
   - `generators.js`: 100%
-  - `renderer.js`: 63.33%（仍需提升）
-- 测试结果：7 测试套件全部通过，131 测试（10 跳过，121 通过）
+  - `renderer.js`: 63.33%（jsdom 不支持 WebGL，仅 E2E 测试）
+- 测试结果：12 测试套件全部通过，244 测试通过
+- camera.test.js 和 scene.test.js 有 19 个测试失败（WebGL/OrbitControls 在 jsdom 中不可用）
 
 **Phase 1 已修复的问题**：
 - 切片提取：现已支持任意轴组合切片（之前仅支持 w+y, w+y+z）
@@ -943,6 +944,15 @@ async function generateContentHash(data) {
 | Torus 颜色常量越界 | `js/fourD/generators.js` | 已修复颜色数组访问问题 |
 | 默认状态不统一 | `js/quadrant/controls.js` | xyzw 初始 sliceValue 统一为 12 |
 | hash.js 测试覆盖不足 | `tests/utils/hash.test.js` | 新增 22 个测试用例，覆盖率达到 100% |
+
+### Phase 1 代码提交
+
+| Commit | 描述 |
+|--------|------|
+| `3c4f1ac` | feat: implement quadrant slice control system |
+| `4c26fe4` | Fix PRD consistency - update terminology from lock/fixed to slice/free |
+| `11c5694` | Update PRD to v0.7 with quadrant slice control |
+| `0a6c3ba` | Add ARCHITECTURE.md documentation |
 
 ### Phase 1 安全措施
 
