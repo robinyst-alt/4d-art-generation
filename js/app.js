@@ -136,7 +136,7 @@ export function createApp(initialState = {}) {
     // Use multi-axis slice extraction if quadrant state provided
     if (quadrantState) {
       const extracted = extractMultiAxisSlice(matrix, quadrantState);
-      const pointsData = toThreePoints(extracted.data, resolution);
+      const pointsData = toThreePoints(extracted.data, resolution, extracted.dimensions);
 
       // Remove old points if exists
       if (currentPoints) {

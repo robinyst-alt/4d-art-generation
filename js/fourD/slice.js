@@ -69,37 +69,39 @@ export function extractMultipleSlices(matrix, resolution, wRange) {
 
 /**
  * Convert slice data to Three.js points format
- * @param {Float32Array} sliceData - 3D slice data [z][y][x][rgba]
- * @param {number} resolution - Resolution of the slice
+ * Handles 1D (line), 2D (plane), and 3D (volume) slice data
+ * @param {Float32Array} sliceData - Slice data of any dimension
+ * @param {number} resolution - Resolution of the original matrix
+ * @param {number} dimensions - Number of dimensions in slice data (1, 2, or 3)
  * @returns {Object} Object with positions and colors Float32Arrays
  */
-export function toThreePoints(sliceData, resolution) {
+export function toThreePoints(sliceData, resolution, dimensions = 3) {
   const positions = [];
   const colors = [];
 
-  for (let z = 0; z < resolution; z++) {
+  if (dimensions === 3) {
+    // 3D slice: [z][y][x][rgba]
+    for (let z = 0; z < resolution; z++) {
+      for (let y = 0; y < resolution; y++) {
+        for (let x = 0; x < resolution; x++) {
+          const index = (z * resolution * resolution + y * resolution + x) * 4;
+          processPoint(sliceData, index, x, y, z, resolution, positions, colors);
+        }
+      }
+    }
+  } else if (dimensions === 2) {
+    // 2D slice: [y][x][rgba] (flattened)
     for (let y = 0; y < resolution; y++) {
       for (let x = 0; x < resolution; x++) {
-        const index = (z * resolution * resolution + y * resolution + x) * 4;
-
-        // Skip transparent points
-        if (sliceData[index + 3] <= 0) {
-          continue;
-        }
-
-        // Normalize position to [-1, 1] range for Three.js
-        const nx = (x / resolution) * 2 - 1;
-        const ny = (y / resolution) * 2 - 1;
-        const nz = (z / resolution) * 2 - 1;
-
-        positions.push(nx, ny, nz);
-        colors.push(
-          sliceData[index],
-          sliceData[index + 1],
-          sliceData[index + 2],
-          sliceData[index + 3]
-        );
+        const index = (y * resolution + x) * 4;
+        processPoint(sliceData, index, x, y, 0, resolution, positions, colors);
       }
+    }
+  } else if (dimensions === 1) {
+    // 1D slice: [x][rgba] (flattened)
+    for (let x = 0; x < resolution; x++) {
+      const index = x * 4;
+      processPoint(sliceData, index, x, 0, 0, resolution, positions, colors);
     }
   }
 
@@ -107,4 +109,27 @@ export function toThreePoints(sliceData, resolution) {
     positions: new Float32Array(positions),
     colors: new Float32Array(colors)
   };
+}
+
+/**
+ * Process a single point and add to positions/colors arrays
+ */
+function processPoint(sliceData, index, x, y, z, resolution, positions, colors) {
+  // Skip transparent points
+  if (sliceData[index + 3] <= 0) {
+    return;
+  }
+
+  // Normalize position to [-1, 1] range for Three.js
+  const nx = (x / resolution) * 2 - 1;
+  const ny = (y / resolution) * 2 - 1;
+  const nz = (z / resolution) * 2 - 1;
+
+  positions.push(nx, ny, nz);
+  colors.push(
+    sliceData[index],
+    sliceData[index + 1],
+    sliceData[index + 2],
+    sliceData[index + 3]
+  );
 }
