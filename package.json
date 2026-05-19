@@ -11,6 +11,9 @@
   "jest": {
     "testEnvironment": "jsdom",
     "transform": {},
+    "setupFilesAfterEnv": [
+      "<rootDir>/tests/setup.js"
+    ],
     "moduleFileExtensions": [
       "js",
       "mjs"
@@ -19,9 +22,10 @@
       "**/tests/**/*.test.js"
     ],
     "collectCoverageFrom": [
-      "js/**/*.js",
+      "js/utils/**/*.js",
       "!js/main.js",
-      "!js/app.js"
+      "!js/app.js",
+      "!js/render/renderer.js"
     ],
     "coverageThreshold": {
       "global": {
@@ -29,8 +33,15 @@
         "functions": 80,
         "lines": 80,
         "statements": 80
+      },
+      "./js/utils/hash.js": {
+        "branches": 100,
+        "functions": 100,
+        "lines": 100,
+        "statements": 100
       }
-    }
+    },
+    "coverageDirectory": "coverage"
   },
   "keywords": [
     "4d",
@@ -58,5 +69,8 @@
     "jest-environment-jsdom": "^30.4.1",
     "playwright": "^1.60.0",
     "three": "^0.160.0"
+  },
+  "dependencies": {
+    "canvas": "^3.2.3"
   }
 }

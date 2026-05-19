@@ -49,6 +49,10 @@ export function extractSlice(matrix, resolution, wIndex) {
  * @returns {Array<Float32Array>} Array of 3D slice data
  */
 export function extractMultipleSlices(matrix, resolution, wRange) {
+  if (!Array.isArray(wRange) || wRange.length < 2) {
+    throw new Error('wRange must be an array with at least 2 elements [start, end]');
+  }
+
   const [start, end] = wRange;
 
   if (start > end) {

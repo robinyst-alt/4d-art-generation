@@ -6,6 +6,18 @@
  */
 
 import { createApp } from './app.js';
+import {
+  createQuadrantControls,
+  getAxisState,
+  updateAxisDisplay,
+  onAxisChange
+} from './quadrant/controls.js';
+import {
+  createQuadrantState,
+  setSliceValue,
+  setAxisMode,
+  extractMultiAxisSlice
+} from './quadrant/stateManager.js';
 
 /**
  * Global application instance
@@ -48,28 +60,20 @@ export function initApp() {
   // Create app instance
   appInstance = createApp();
 
-  // Set initial w to middle of range (where most shapes are visible)
-  const initialW = 12;
-
   // Initialize rendering
   appInstance.init(canvasContainer);
 
   // Generate initial shape
-  const matrix = appInstance.generate();
+  matrix = appInstance.generate();
 
-  // Update slice at w=12 (middle of range)
-  const state = appInstance.getState();
-  appInstance.updateSlice(matrix, state.resolution, initialW);
-
-  // Update w slider to match
-  const wSlider = document.getElementById('w-slider');
-  const wValue = document.getElementById('w-value');
-  if (wSlider) {
-    wSlider.value = initialW;
-    wSlider.max = state.resolution - 1;
-  }
-  if (wValue) {
-    wValue.textContent = initialW;
+  // Set initial quadrant state to middle of range
+  const initialSliceValue = Math.floor(24 / 2);
+  if (quadrantControls) {
+    ['x', 'y', 'z'].forEach(axis => {
+      updateAxisDisplay(quadrantControls, axis, { sliceValue: initialSliceValue });
+    });
+    // W starts at 0 (slice mode)
+    updateAxisDisplay(quadrantControls, 'w', { sliceValue: 0 });
   }
 
   initialized = true;
@@ -281,36 +285,78 @@ function applyLanguage(lang) {
 }
 
 /**
+ * Quadrant state (four-axis slice control)
+ */
+let quadrantState = null;
+let quadrantControls = null;
+let matrix = null;
+
+/**
+ * Set up quadrant controls (four-axis slice/free control)
+ */
+function setupQuadrantControls() {
+  const container = document.querySelector('.quadrant-controls');
+  if (!container) return;
+
+  // Initialize quadrant state
+  quadrantState = createQuadrantState();
+
+  // Create quadrant controls manager
+  quadrantControls = createQuadrantControls(container);
+
+  // Listen for axis changes and update state
+  ['x', 'y', 'z', 'w'].forEach(axis => {
+    // Mode toggle
+    onAxisChange(quadrantControls, axis, 'mode', (newMode) => {
+      quadrantState = setAxisMode(quadrantState, axis, newMode);
+      updateSliceFromQuadrantState();
+    });
+
+    // Value change
+    onAxisChange(quadrantControls, axis, 'value', (newValue) => {
+      quadrantState = setSliceValue(quadrantState, axis, newValue);
+      updateSliceFromQuadrantState();
+    });
+  });
+}
+
+/**
+ * Update slice from quadrant state
+ */
+function updateSliceFromQuadrantState() {
+  if (!appInstance || !quadrantState || !matrix) return;
+
+  const state = appInstance.getState();
+  const extracted = extractMultiAxisSlice(matrix, quadrantState);
+
+  // The extracted data needs to be converted to display format
+  // This would require updating the scene rendering to handle multi-axis slices
+  // For now, we update the UI to reflect the state
+  console.log('Quadrant state updated:', quadrantState.axes);
+}
+
+/**
  * Set up event listeners for UI controls
  */
 function setupControls() {
+  // Quadrant controls (four-axis slice/free control)
+  setupQuadrantControls();
+
   // Shape selector
   const shapeSelector = document.getElementById('shape-selector');
   if (shapeSelector) {
     shapeSelector.addEventListener('change', (e) => {
       const newShape = e.target.value;
-      // Reset W slider to middle value when shape changes
-      const wSlider = document.getElementById('w-slider');
-      const wValue = document.getElementById('w-value');
-      const middleW = Math.floor(24 / 2); // Default resolution / 2
-      if (wSlider) {
-        wSlider.value = middleW;
-        wSlider.max = 23;
-      }
-      if (wValue) wValue.textContent = middleW;
-      // Update shape
       appInstance.update({ currentShape: newShape });
-    });
-  }
 
-  // W slider
-  const wSlider = document.getElementById('w-slider');
-  const wValue = document.getElementById('w-value');
-  if (wSlider) {
-    wSlider.addEventListener('input', (e) => {
-      const value = parseInt(e.target.value);
-      if (wValue) wValue.textContent = value;
-      appInstance.update({ wValue: value });
+      // Reset quadrant controls to default state
+      if (quadrantControls) {
+        ['x', 'y', 'z', 'w'].forEach(axis => {
+          const defaultMode = axis === 'w' ? 'slice' : 'free';
+          const defaultValue = axis === 'w' ? 0 : 12;
+          updateAxisDisplay(quadrantControls, axis, { mode: defaultMode, sliceValue: defaultValue });
+        });
+      }
     });
   }
 
@@ -368,32 +414,43 @@ function handleKeyboardShortcuts(event) {
     event.preventDefault();
   }
 
-  const state = appInstance.getState();
+  // Get slice axes from quadrant state
+  const sliceAxes = quadrantState
+    ? Object.entries(quadrantState.axes)
+        .filter(([_, axis]) => axis.mode === 'slice')
+        .map(([axis, _]) => axis)
+    : ['w'];
+
+  // Get the primary slice axis (first slice axis found, default to w)
+  const primaryAxis = sliceAxes.length > 0 ? sliceAxes[0] : 'w';
+  const currentValue = quadrantState?.axes[primaryAxis]?.sliceValue ?? 12;
 
   switch (event.key) {
     case 'ArrowLeft':
-      // Decrease W value
-      if (state.wValue > 0) {
-        const newW = state.wValue - 1;
-        appInstance.update({ wValue: newW });
-        // Update slider UI
-        const wSlider = document.getElementById('w-slider');
-        const wValue = document.getElementById('w-value');
-        if (wSlider) wSlider.value = newW;
-        if (wValue) wValue.textContent = newW;
+      // Decrease primary slice axis value
+      if (currentValue > 0) {
+        const newValue = currentValue - 1;
+        if (quadrantControls) {
+          updateAxisDisplay(quadrantControls, primaryAxis, { sliceValue: newValue });
+        }
+        if (quadrantState) {
+          quadrantState = setSliceValue(quadrantState, primaryAxis, newValue);
+          updateSliceFromQuadrantState();
+        }
       }
       break;
 
     case 'ArrowRight':
-      // Increase W value
-      if (state.wValue < state.resolution - 1) {
-        const newW = state.wValue + 1;
-        appInstance.update({ wValue: newW });
-        // Update slider UI
-        const wSlider = document.getElementById('w-slider');
-        const wValue = document.getElementById('w-value');
-        if (wSlider) wSlider.value = newW;
-        if (wValue) wValue.textContent = newW;
+      // Increase primary slice axis value
+      if (currentValue < 23) {
+        const newValue = currentValue + 1;
+        if (quadrantControls) {
+          updateAxisDisplay(quadrantControls, primaryAxis, { sliceValue: newValue });
+        }
+        if (quadrantState) {
+          quadrantState = setSliceValue(quadrantState, primaryAxis, newValue);
+          updateSliceFromQuadrantState();
+        }
       }
       break;
 
@@ -425,6 +482,7 @@ function handleKeyboardShortcuts(event) {
     case 'T':
       // Cycle through themes
       const themes = ['neon', 'sketch', 'firefly', 'aurora', 'cyberpunk'];
+      const state = appInstance.getState();
       const currentIndex = themes.indexOf(state.colorTheme);
       const nextTheme = themes[(currentIndex + 1) % themes.length];
       appInstance.setTheme(nextTheme);

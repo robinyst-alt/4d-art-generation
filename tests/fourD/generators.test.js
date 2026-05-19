@@ -211,7 +211,7 @@ describe('4D Generators', () => {
 
   describe('generate (dispatcher)', () => {
     test('should dispatch to tesseract generator', () => {
-      const params = { size: 8, resolution: 8 };
+      const params = { resolution: 8 };
       const result = generate('tesseract', params);
 
       expect(result).toBeInstanceOf(Float32Array);
@@ -219,7 +219,7 @@ describe('4D Generators', () => {
     });
 
     test('should dispatch to sphere generator', () => {
-      const params = { size: 8, radius: 0.5 };
+      const params = { resolution: 8, radius: 0.5 };
       const result = generate('sphere', params);
 
       expect(result).toBeInstanceOf(Float32Array);
@@ -227,7 +227,7 @@ describe('4D Generators', () => {
     });
 
     test('should dispatch to torus generator', () => {
-      const params = { size: 8, majorR: 0.4, minorR: 0.2 };
+      const params = { resolution: 8, majorR: 0.4, minorR: 0.2 };
       const result = generate('torus', params);
 
       expect(result).toBeInstanceOf(Float32Array);
@@ -235,7 +235,7 @@ describe('4D Generators', () => {
     });
 
     test('should dispatch to octahedron generator', () => {
-      const params = { size: 8 };
+      const params = { resolution: 8 };
       const result = generate('octahedron', params);
 
       expect(result).toBeInstanceOf(Float32Array);
@@ -243,7 +243,7 @@ describe('4D Generators', () => {
     });
 
     test('should dispatch to dodecahedron generator', () => {
-      const params = { size: 8 };
+      const params = { resolution: 8 };
       const result = generate('dodecahedron', params);
 
       expect(result).toBeInstanceOf(Float32Array);
@@ -251,7 +251,7 @@ describe('4D Generators', () => {
     });
 
     test('should dispatch to icosahedron generator', () => {
-      const params = { size: 8 };
+      const params = { resolution: 8 };
       const result = generate('icosahedron', params);
 
       expect(result).toBeInstanceOf(Float32Array);

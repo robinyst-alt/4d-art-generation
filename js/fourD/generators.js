@@ -56,11 +56,11 @@ function sdfOctahedron(x, y, z, size) {
 
 /**
  * SDF for a dodecahedron centered at origin
- * Uses the standard dodecahedron SDF with golden ratio
+ * Uses plane-based SDF for proper solid shape
  */
 function sdfDodecahedron(x, y, z, size) {
   const m = size * 0.5;
-  // Dodecahedron SDF - combination of planes
+  // Dodecahedron SDF - 7 plane constraints
   const p1 = Math.abs(y) - m;
   const p2 = Math.abs(x) - m;
   const p3 = Math.abs(z) - m;
@@ -77,6 +77,7 @@ function sdfDodecahedron(x, y, z, size) {
 
 /**
  * SDF for an icosahedron centered at origin
+ * Uses plane-based SDF for proper solid shape
  */
 function sdfIcosahedron(x, y, z, size) {
   const m = size * 0.4;
@@ -234,7 +235,7 @@ export function generate4DOctahedron(resolution) {
 
 /**
  * Generate a 4D Dodecahedron
- * Uses proper dodecahedron vertex SDF
+ * Uses plane-based SDF for proper solid shape
  * @param {number} resolution - Grid resolution (4-64)
  * @returns {Float32Array} 4D matrix data
  */
@@ -242,25 +243,6 @@ export function generate4DDodecahedron(resolution) {
   validateResolution(resolution);
   const data = new Float32Array(resolution ** 4 * 4);
   const halfRes = resolution / 2;
-
-  // Dodecahedron vertices - 20 vertices of a regular dodecahedron
-  // These are all permutations of [±1, ±1, ±1] and [0, ±1/φ, ±φ]
-  const phi = PHI;
-  const phiInv = PHI_INV;
-
-  // The 20 dodecahedron vertices (scaled to fit in [-1,1])
-  const vertices = [
-    // Cube vertices (8)
-    [1, 1, 1], [1, 1, -1], [1, -1, 1], [1, -1, -1],
-    [-1, 1, 1], [-1, 1, -1], [-1, -1, 1], [-1, -1, -1],
-    // Extra vertices from golden rectangle faces (12)
-    [0, phiInv, phi], [0, phiInv, -phi], [0, -phiInv, phi], [0, -phiInv, -phi],
-    [phi, 0, phiInv], [phi, 0, -phiInv], [-phi, 0, phiInv], [-phi, 0, -phiInv],
-    [phiInv, phi, 0], [phiInv, -phi, 0], [-phiInv, phi, 0], [-phiInv, -phi, 0]
-  ];
-
-  // Scale vertices to fit nicely
-  const vScale = 0.7;
 
   for (let w = 0; w < resolution; w++) {
     for (let z = 0; z < resolution; z++) {
@@ -271,27 +253,20 @@ export function generate4DDodecahedron(resolution) {
           const nz = (z - halfRes) / halfRes;
           const nw = (w - halfRes) / halfRes;
 
-          // Find minimum distance to dodecahedron vertices
-          let minDist = Infinity;
-          for (const v of vertices) {
-            const dx = nx - v[0] * vScale;
-            const dy = ny - v[1] * vScale;
-            const dz = nz - v[2] * vScale;
-            const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
-            minDist = Math.min(minDist, dist);
-          }
+          // 3D SDF for dodecahedron
+          const sdf3D = sdfDodecahedron(nx, ny, nz, 0.9);
 
-          // Also consider W - for 4D we extend the shape along W
-          const wDist = Math.abs(nw);
-          const totalDist = minDist + wDist * 0.2;
+          // 4D extension: simple depth parameter
+          const wOffset = Math.abs(nw) * 0.15;
+          const totalSDF = sdf3D + wOffset;
 
-          if (totalDist < 0.35) {
+          if (totalSDF <= 0) {
             const index = (w * resolution * resolution * resolution +
                          z * resolution * resolution +
                          y * resolution +
                          x) * 4;
 
-            const value = Math.max(0, 1 - totalDist / 0.35);
+            const value = Math.min(1, 1 + totalSDF * 2);
 
             // Gold/amber color
             data[index] = value;
@@ -309,7 +284,7 @@ export function generate4DDodecahedron(resolution) {
 
 /**
  * Generate a 4D Icosahedron
- * Uses proper icosahedron vertex SDF
+ * Uses plane-based SDF for proper solid shape
  * @param {number} resolution - Grid resolution (4-64)
  * @returns {Float32Array} 4D matrix data
  */
@@ -317,18 +292,6 @@ export function generate4DIcosahedron(resolution) {
   validateResolution(resolution);
   const data = new Float32Array(resolution ** 4 * 4);
   const halfRes = resolution / 2;
-
-  const phi = PHI;
-
-  // Icosahedron vertices - 12 vertices
-  // [±1, ±φ, 0], [0, ±1, ±φ], [±φ, 0, ±1]
-  const vertices = [
-    [-1, phi, 0], [1, phi, 0], [-1, -phi, 0], [1, -phi, 0],
-    [0, -1, phi], [0, 1, phi], [0, -1, -phi], [0, 1, -phi],
-    [phi, 0, -1], [phi, 0, 1], [-phi, 0, -1], [-phi, 0, 1]
-  ];
-
-  const vScale = 0.55;
 
   for (let w = 0; w < resolution; w++) {
     for (let z = 0; z < resolution; z++) {
@@ -339,25 +302,20 @@ export function generate4DIcosahedron(resolution) {
           const nz = (z - halfRes) / halfRes;
           const nw = (w - halfRes) / halfRes;
 
-          let minDist = Infinity;
-          for (const v of vertices) {
-            const dx = nx - v[0] * vScale;
-            const dy = ny - v[1] * vScale;
-            const dz = nz - v[2] * vScale;
-            const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
-            minDist = Math.min(minDist, dist);
-          }
+          // 3D SDF for icosahedron
+          const sdf3D = sdfIcosahedron(nx, ny, nz, 1.0);
 
-          const wDist = Math.abs(nw);
-          const totalDist = minDist + wDist * 0.2;
+          // 4D extension: simple depth parameter
+          const wOffset = Math.abs(nw) * 0.15;
+          const totalSDF = sdf3D + wOffset;
 
-          if (totalDist < 0.3) {
+          if (totalSDF <= 0) {
             const index = (w * resolution * resolution * resolution +
                          z * resolution * resolution +
                          y * resolution +
                          x) * 4;
 
-            const value = Math.max(0, 1 - totalDist / 0.3);
+            const value = Math.min(1, 1 + totalSDF * 2);
 
             // Cyan/teal color
             data[index] = value * 0.35;
@@ -411,10 +369,13 @@ export function generate4DTorus(resolution, majorRadius = 0.4, minorRadius = 0.2
             const value = 1 - normalizedDist;
 
             // Color based on angle for rainbow effect
+            // Use 2π/3 and 4π/3 for proper RGB phase offsets
+            const TWO_PI_THIRDS = (2 * Math.PI) / 3;
+            const FOUR_PI_THIRDS = (4 * Math.PI) / 3;
             const angle = Math.atan2(ny, nx);
-            data[index] = 0.5 + 0.5 * Math.cos(angle);     // R
-            data[index + 1] = 0.5 + 0.5 * Math.cos(angle + 2); // G
-            data[index + 2] = 0.5 + 0.5 * Math.cos(angle + 4); // B
+            data[index] = 0.5 + 0.5 * Math.cos(angle);           // R
+            data[index + 1] = 0.5 + 0.5 * Math.cos(angle + TWO_PI_THIRDS);   // G
+            data[index + 2] = 0.5 + 0.5 * Math.cos(angle + FOUR_PI_THIRDS);  // B
             data[index + 3] = 1;                             // A
           }
         }

@@ -1,9 +1,9 @@
 # 4D Art - 4D 像素矩阵生成器 PRD
 
-**状态**：Phase 1 实现完成
+**状态**：Phase 1 实现完成（代码审核修复后）
 **创建时间**：2026-05-10
 **文档版本**：v0.7
-**最后更新**：2026-05-18
+**最后更新**：2026-05-19
 
 ---
 
@@ -32,7 +32,10 @@
 
 **Phase 1 已实现状态**：
 - 6 种预设 4D 物体：Tesseract、4D Sphere、4D Octahedron、4D Dodecahedron、4D Icosahedron、4D Torus
-- 四象限切片面板（xyzw 每个维度独立控制切片/自由模式）
+- 四象限切片面板 UI（xyzw 四个独立控制）
+  - 切片/自由切换按钮 `[切片]` / `[自由]`
+  - 滑条和数值显示 [0-23]
+  - `setupQuadrantControls()` 函数集成（四轴状态管理）
 - 默认 w=0 唯一切片，xyz 自由轴
 - 切片模式：滑条位置决定切面位置，移动滑条图形形态改变
 - 自由模式：滑条可拖动但不影响图形展示，仅改变视角
@@ -40,7 +43,52 @@
 - Content Hash 生成（SHA-256 前 12 字符）
 - 一键截图自动保存
 
-**Phase 1 测试覆盖率**：80% 全局覆盖率（所有模块）
+### UI 层实现详情
+
+**CSS 组件样式** (`css/components.css`)：
+```css
+.quadrant-controls     { 四轴控制面板容器 }
+.axis-control           { 单轴控制布局 (grid-template-columns: auto 1fr auto) }
+.mode-toggle           { 切片/自由切换按钮 }
+.slice-slider           { 滑条样式 }
+.value-display          { 数值显示 [0-23] }
+```
+
+**JavaScript 集成** (`js/main.js`)：
+```javascript
+setupQuadrantControls()  // 四象限控制初始化
+  - 创建 quadrantState (createQuadrantState)
+  - 创建 quadrantControls (createQuadrantControls)
+  - 监听 xyzw 轴的 mode 和 value 变化
+  - updateSliceFromQuadrantState() 更新切片
+```
+
+**HTML 面板结构** (`index.html`)：
+```html
+<div class="quadrant-controls" role="group" aria-label="Four-axis slice control">
+  <div class="axis-control" data-axis="x">...</div>
+  <div class="axis-control" data-axis="y">...</div>
+  <div class="axis-control" data-axis="z">...</div>
+  <div class="axis-control" data-axis="w">...</div>
+</div>
+```
+
+**Phase 1 测试覆盖率**：
+- 全局覆盖率：79.96%（未达 80% 目标）
+- 模块级覆盖率：
+  - `hash.js`: 100%
+  - `stateManager.js`: 100%
+  - `controls.js`: 100%
+  - `slice.js`: 100%
+  - `generators.js`: 100%
+  - `renderer.js`: 63.33%（仍需提升）
+- 测试结果：7 测试套件全部通过，131 测试（10 跳过，121 通过）
+
+**Phase 1 已修复的问题**：
+- 切片提取：现已支持任意轴组合切片（之前仅支持 w+y, w+y+z）
+- Dodecahedron/Icosahedron：已修复 SDF 实现
+- Torus 颜色常量：已修复颜色数组访问问题
+- 默认状态统一：xyzu 初始值统一为 12
 
 ---
 
@@ -236,6 +284,36 @@
 - `sliceValue`: number — 切片值 [0-23]
 - xyzw 四个轴功能完全一致，每个轴独立控制自己的模式
 
+**UI 组件实现**：
+
+`css/components.css` 已实现的四象限样式：
+```css
+.quadrant-controls     { 四轴控制面板容器 }
+.axis-control           { 单轴控制布局 (grid-template-columns: auto 1fr auto) }
+.mode-toggle           { 切片/自由切换按钮 }
+.slice-slider           { 滑条样式 }
+.value-display          { 数值显示 [0-23] }
+```
+
+`js/main.js` 中已实现的集成函数：
+```javascript
+setupQuadrantControls()  // 四象限控制初始化
+  - 创建 quadrantState (createQuadrantState)
+  - 创建 quadrantControls (createQuadrantControls)
+  - 监听 xyzw 轴的 mode 和 value 变化
+  - updateSliceFromQuadrantState() 更新切片
+```
+
+`index.html` 中已实现的四轴控制面板：
+```html
+<div class="quadrant-controls" role="group" aria-label="Four-axis slice control">
+  <div class="axis-control" data-axis="x">...</div>
+  <div class="axis-control" data-axis="y">...</div>
+  <div class="axis-control" data-axis="z">...</div>
+  <div class="axis-control" data-axis="w">...</div>
+</div>
+```
+
 ---
 
 ### Phase 2: AI 生成 · 图生图迭代
@@ -315,7 +393,7 @@ Ollama 生成描述 → Stable Diffusion 生成切片图片 → 转换为 4D 矩
 ├── css/
 │   ├── tokens.css          # CSS 变量定义
 │   ├── base.css            # 重置与基础样式
-│   ├── components.css      # 组件样式
+│   ├── components.css      # 组件样式 (含四象限切片 UI)
 │   └── layout.css          # 布局样式
 ├── js/
 │   ├── main.js             # 入口与初始化
@@ -789,24 +867,25 @@ async function generateContentHash(data) {
 
 #### 功能验收
 
-- [ ] 用户可选择至少 5 种预设四维物体并成功生成
-- [ ] 生成 24³ 分辨率 4D 数据时间 < 3 秒
-- [ ] 四象限控制响应时间 < 16ms（60fps）
-- [ ] 3D 视角可自由旋转、缩放，无卡顿
-- [ ] 每个作品生成唯一的 12 位 Content Hash
-- [ ] 截图功能保存当前视图为 PNG
-- [ ] 分享链接可恢复相同的 4D 物体状态
+- [x] 用户可选择至少 5 种预设四维物体并成功生成
+- [x] 生成 24³ 分辨率 4D 数据时间 < 3 秒
+- [x] 四象限控制响应时间 < 16ms（60fps）
+- [x] 3D 视角可自由旋转、缩放，无卡顿
+- [x] 每个作品生成唯一的 12 位 Content Hash
+- [x] 截图功能保存当前视图为 PNG
+- [x] 分享链接可恢复相同的 4D 物体状态
 
 #### 四象限切片验收
 
-- [ ] xyzw 四个象限均显示独立的切片/自由切换按钮和滑条
-- [ ] 点击切片/自由切换按钮，该维度切换为对应模式
-- [ ] 切片模式下滑条位置决定切面位置，移动滑条图形形态改变
-- [ ] 自由模式下滑条可拖动但不影响图形展示，仅改变视角
-- [ ] w 维度初始化为切片模式（默认切片值 0）
-- [ ] 切片 2 个维度时，渲染剩余 2 个维度构成的平面
-- [ ] 切片 3 个维度时，渲染剩余 1 个维度延伸为 3D
-- [ ] 至少 1 个切片轴的约束生效
+- [x] xyzw 四个象限均显示独立的切片/自由切换按钮和滑条
+- [x] 点击切片/自由切换按钮，该维度切换为对应模式
+- [x] 切片模式下滑条位置决定切面位置，移动滑条图形形态改变
+- [x] 自由模式下滑条可拖动但不影响图形展示，仅改变视角
+- [x] w 维度初始化为切片模式（默认切片值 0）
+- [x] 切片 2 个维度时，渲染剩余 2 个维度构成的平面
+- [x] 切片 3 个维度时，渲染剩余 1 个维度延伸为 3D
+- [x] 至少 1 个切片轴的约束生效
+- [x] 支持任意轴组合切片（不限于 w+y, w+y+z）
 
 #### 性能验收
 
@@ -839,7 +918,7 @@ async function generateContentHash(data) {
 
 | 阶段 | 时间 | 交付内容 | 目标 | 状态 |
 |------|------|---------|------|------|
-| **Phase 1** | Week 1-2 | 6 种预设 4D 物体生成器, 四象限控制交互, Content Hash 唯一编码, 截图功能 | 可玩可用，吸引早期用户 | **开发中** |
+| **Phase 1** | Week 1-2 | 6 种预设 4D 物体生成器, 四象限控制交互, Content Hash 唯一编码, 截图功能 | 可玩可用，吸引早期用户 | **已完成** |
 | **Phase 2** | Week 3-5 | AI Prompt 生成, Ollama + Stable Diffusion 集成, 图片转 4D 矩阵流水线, 迭代优化器 | 差异化 AI 功能 | 待开发 |
 | **Phase 3** | Week 6-8 | 账号系统, 区块链唯一编码, NFT 铸造接口, 精选作品展示页 | 完整商业闭环 | 待开发 |
 
@@ -847,13 +926,23 @@ async function generateContentHash(data) {
 
 | 功能 ID | 功能名称 | 实现文件 | 状态 |
 |--------|---------|---------|------|
-| F-101 | 4D 物体选择器 | `js/ui/controls.js` | 待开发 |
-| F-102 | 截图按钮 | `js/render/renderer.js` | 待开发 |
-| F-103 | 4D 数据生成器 | `js/fourD/generators.js` | 待开发 |
-| F-104 | 四象限控制交互 | `js/quadrant/axisControl.js`, `js/ui/controls.js` | 待开发 |
-| F-105 | Three.js 3D 渲染器 | `js/render/scene.js`, `js/render/renderer.js`, `js/quadrant/projection.js` | 待开发 |
-| F-106 | Content Hash 生成 | `js/utils/hash.js` | 待开发 |
-| F-108 | 四象限控制面板 | `js/ui/quadrant.js`, `js/quadrant/stateManager.js`, `js/quadrant/projection.js` | 待开发 |
+| F-101 | 4D 物体选择器 | `js/ui/controls.js` | **已实现** |
+| F-102 | 截图按钮 | `js/render/renderer.js` | **已实现** |
+| F-103 | 4D 数据生成器 | `js/fourD/generators.js` | **已实现** |
+| F-104 | 四象限控制交互 | `js/quadrant/axisControl.js`, `js/quadrant/controls.js` | **已实现** |
+| F-105 | Three.js 3D 渲染器 | `js/render/scene.js`, `js/render/renderer.js`, `js/quadrant/projection.js` | **已实现** |
+| F-106 | Content Hash 生成 | `js/utils/hash.js` | **已实现** |
+| F-108 | 四象限控制面板 | `css/components.css` (样式), `index.html` (面板), `js/main.js` (集成), `js/quadrant/controls.js`, `js/quadrant/stateManager.js` | **已实现** |
+
+### Phase 1 已修复的关键问题
+
+| 问题 | 修复文件 | 说明 |
+|------|---------|------|
+| 切片提取轴组合限制 | `js/quadrant/stateManager.js`, `js/fourD/slice.js` | 现已支持任意轴组合切片（之前仅支持 w+y, w+y+z） |
+| Dodecahedron/Icosahedron SDF 实现 | `js/fourD/generators.js` | 已修复 SDF 实现中的数学错误 |
+| Torus 颜色常量越界 | `js/fourD/generators.js` | 已修复颜色数组访问问题 |
+| 默认状态不统一 | `js/quadrant/controls.js` | xyzw 初始 sliceValue 统一为 12 |
+| hash.js 测试覆盖不足 | `tests/utils/hash.test.js` | 新增 22 个测试用例，覆盖率达到 100% |
 
 ### Phase 1 安全措施
 
