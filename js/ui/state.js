@@ -14,7 +14,9 @@ export const ACTIONS = {
   SET_RENDERING: 'SET_RENDERING',
   SET_MATRIX: 'SET_MATRIX',
   SET_POINT_SPACING: 'SET_POINT_SPACING',
-  SET_CONTENT_HASH: 'SET_CONTENT_HASH'
+  SET_CONTENT_HASH: 'SET_CONTENT_HASH',
+  SET_RESOLUTION: 'SET_RESOLUTION',
+  SET_COLOR_THEME: 'SET_COLOR_THEME'
 };
 
 // State subscribers
@@ -71,6 +73,14 @@ export function dispatch(stateContainer, action) {
 
     case ACTIONS.SET_CONTENT_HASH:
       newState = { ...currentState, contentHash: action.payload };
+      break;
+
+    case ACTIONS.SET_RESOLUTION:
+      newState = { ...currentState, resolution: action.payload };
+      break;
+
+    case ACTIONS.SET_COLOR_THEME:
+      newState = { ...currentState, colorTheme: action.payload };
       break;
 
     default:

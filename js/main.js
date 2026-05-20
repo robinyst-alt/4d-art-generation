@@ -35,6 +35,13 @@ let canvasContainer = null;
 let initialized = false;
 
 /**
+ * Quadrant state (four-axis slice control)
+ */
+let quadrantState = null;
+let quadrantControls = null;
+let matrix = null;
+
+/**
  * Initialize the application
  * @returns {Function} Cleanup function to tear down the application
  */
@@ -266,13 +273,6 @@ function applyLanguage(lang) {
   // Update translations
   updateTranslations();
 }
-
-/**
- * Quadrant state (four-axis slice control)
- */
-let quadrantState = null;
-let quadrantControls = null;
-let matrix = null;
 
 /**
  * Set up quadrant controls (four-axis slice/free control)
