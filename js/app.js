@@ -269,8 +269,8 @@ export function createApp(initialState = {}) {
       const middleW = Math.floor(currentState.resolution / 2);
       dispatch(stateContainer, { type: ACTIONS.SET_W_VALUE, payload: middleW });
       updated = true;
-      // Regenerate shape
-      generateShape();
+      // Regenerate shape (async)
+      generateShape().then(() => updateHashDisplay());
     }
 
     // Handle W value change
@@ -288,8 +288,8 @@ export function createApp(initialState = {}) {
     if (typeof update.resolution === 'number' && update.resolution !== currentState.resolution) {
       dispatch(stateContainer, { type: ACTIONS.SET_RESOLUTION, payload: update.resolution });
       updated = true;
-      // Regenerate shape
-      generateShape();
+      // Regenerate shape (async)
+      generateShape().then(() => updateHashDisplay());
     }
 
     // Handle color theme change
@@ -377,6 +377,19 @@ export function createApp(initialState = {}) {
     document.body.removeChild(link);
 
     return true;
+  }
+
+  /**
+   * Update content hash display in DOM
+   */
+  function updateHashDisplay() {
+    const state = stateContainer.getState();
+    if (state.contentHash) {
+      const hashElement = document.getElementById('info-hash');
+      if (hashElement) {
+        hashElement.textContent = state.contentHash;
+      }
+    }
   }
 
   // Return public API

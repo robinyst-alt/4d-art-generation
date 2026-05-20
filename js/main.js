@@ -95,19 +95,6 @@ export async function initApp() {
 }
 
 /**
- * Update hash display in UI
- */
-function updateHashDisplay() {
-  const hashElement = document.getElementById('info-hash');
-  if (hashElement && appInstance) {
-    const state = appInstance.getState();
-    if (state.contentHash) {
-      hashElement.textContent = state.contentHash;
-    }
-  }
-}
-
-/**
  * Clean up application resources
  */
 export function cleanupApp() {
