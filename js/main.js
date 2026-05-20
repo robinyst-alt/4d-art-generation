@@ -73,8 +73,14 @@ export async function initApp() {
   // Generate initial shape
   matrix = await appInstance.generate();
 
-  // Update hash display
-  updateHashDisplay();
+  // Update hash display from app state
+  const hashElement = document.getElementById('info-hash');
+  if (hashElement) {
+    const state = appInstance.getState();
+    if (state.contentHash) {
+      hashElement.textContent = state.contentHash;
+    }
+  }
 
   // Set initial quadrant state to middle of range
   const initialSliceValue = Math.floor(24 / 2);

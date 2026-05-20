@@ -269,8 +269,8 @@ export function createApp(initialState = {}) {
       const middleW = Math.floor(currentState.resolution / 2);
       dispatch(stateContainer, { type: ACTIONS.SET_W_VALUE, payload: middleW });
       updated = true;
-      // Regenerate shape (async)
-      generateShape().then(() => updateHashDisplay());
+      // Regenerate shape (async) and update hash display when done
+      generateShape().then(() => updateHashDisplay()).catch(() => {});
     }
 
     // Handle W value change
@@ -288,8 +288,8 @@ export function createApp(initialState = {}) {
     if (typeof update.resolution === 'number' && update.resolution !== currentState.resolution) {
       dispatch(stateContainer, { type: ACTIONS.SET_RESOLUTION, payload: update.resolution });
       updated = true;
-      // Regenerate shape (async)
-      generateShape().then(() => updateHashDisplay());
+      // Regenerate shape (async) and update hash display when done
+      generateShape().then(() => updateHashDisplay()).catch(() => {});
     }
 
     // Handle color theme change
