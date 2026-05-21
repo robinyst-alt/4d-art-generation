@@ -100,17 +100,19 @@ export function generateTesseract(resolution, size = 0.9) {
   validateResolution(resolution);
   const data = new Float32Array(resolution ** 4 * 4);
   const halfSize = size / 2;
-  const halfRes = resolution / 2;
+  // Object space [1, 23] centered at [12, 12, 12, 12]
+  const center = 12;
+  const span = 11;
 
   for (let w = 0; w < resolution; w++) {
     for (let z = 0; z < resolution; z++) {
       for (let y = 0; y < resolution; y++) {
         for (let x = 0; x < resolution; x++) {
-          // Normalized coordinates [-1, 1]
-          const nx = (x - halfRes) / halfRes;
-          const ny = (y - halfRes) / halfRes;
-          const nz = (z - halfRes) / halfRes;
-          const nw = (w - halfRes) / halfRes;
+          // Normalized coordinates [-1, 1] in object space [1, 23]
+          const nx = (x - center) / span;
+          const ny = (y - center) / span;
+          const nz = (z - center) / span;
+          const nw = (w - center) / span;
 
           // Tesseract: all points where max(|x|, |y|, |z|, |w|) <= halfSize
           const maxComponent = Math.max(Math.abs(nx), Math.abs(ny), Math.abs(nz), Math.abs(nw));
@@ -152,17 +154,19 @@ export function generateTesseract(resolution, size = 0.9) {
 export function generate4DSphere(resolution, radius = 0.5) {
   validateResolution(resolution);
   const data = new Float32Array(resolution ** 4 * 4);
-  const halfRes = resolution / 2;
+  // Object space [1, 23] centered at [12, 12, 12, 12]
+  const center = 12;
+  const span = 11;
   const radiusSq = radius * radius;
 
   for (let w = 0; w < resolution; w++) {
     for (let z = 0; z < resolution; z++) {
       for (let y = 0; y < resolution; y++) {
         for (let x = 0; x < resolution; x++) {
-          const nx = (x - halfRes) / halfRes;
-          const ny = (y - halfRes) / halfRes;
-          const nz = (z - halfRes) / halfRes;
-          const nw = (w - halfRes) / halfRes;
+          const nx = (x - center) / span;
+          const ny = (y - center) / span;
+          const nz = (z - center) / span;
+          const nw = (w - center) / span;
 
           const distSq = nx * nx + ny * ny + nz * nz + nw * nw;
 
@@ -198,16 +202,18 @@ export function generate4DSphere(resolution, radius = 0.5) {
 export function generate4DOctahedron(resolution) {
   validateResolution(resolution);
   const data = new Float32Array(resolution ** 4 * 4);
-  const halfRes = resolution / 2;
+  // Object space [1, 23] centered at [12, 12, 12, 12]
+  const center = 12;
+  const span = 11;
 
   for (let w = 0; w < resolution; w++) {
     for (let z = 0; z < resolution; z++) {
       for (let y = 0; y < resolution; y++) {
         for (let x = 0; x < resolution; x++) {
-          const nx = (x - halfRes) / halfRes;
-          const ny = (y - halfRes) / halfRes;
-          const nz = (z - halfRes) / halfRes;
-          const nw = (w - halfRes) / halfRes;
+          const nx = (x - center) / span;
+          const ny = (y - center) / span;
+          const nz = (z - center) / span;
+          const nw = (w - center) / span;
 
           // 4D octahedron: |x| + |y| + |z| + |w| <= 1
           const manhattanDist = Math.abs(nx) + Math.abs(ny) + Math.abs(nz) + Math.abs(nw);
@@ -242,16 +248,18 @@ export function generate4DOctahedron(resolution) {
 export function generate4DDodecahedron(resolution) {
   validateResolution(resolution);
   const data = new Float32Array(resolution ** 4 * 4);
-  const halfRes = resolution / 2;
+  // Object space [1, 23] centered at [12, 12, 12, 12]
+  const center = 12;
+  const span = 11;
 
   for (let w = 0; w < resolution; w++) {
     for (let z = 0; z < resolution; z++) {
       for (let y = 0; y < resolution; y++) {
         for (let x = 0; x < resolution; x++) {
-          const nx = (x - halfRes) / halfRes;
-          const ny = (y - halfRes) / halfRes;
-          const nz = (z - halfRes) / halfRes;
-          const nw = (w - halfRes) / halfRes;
+          const nx = (x - center) / span;
+          const ny = (y - center) / span;
+          const nz = (z - center) / span;
+          const nw = (w - center) / span;
 
           // 3D SDF for dodecahedron
           const sdf3D = sdfDodecahedron(nx, ny, nz, 0.9);
@@ -291,16 +299,18 @@ export function generate4DDodecahedron(resolution) {
 export function generate4DIcosahedron(resolution) {
   validateResolution(resolution);
   const data = new Float32Array(resolution ** 4 * 4);
-  const halfRes = resolution / 2;
+  // Object space [1, 23] centered at [12, 12, 12, 12]
+  const center = 12;
+  const span = 11;
 
   for (let w = 0; w < resolution; w++) {
     for (let z = 0; z < resolution; z++) {
       for (let y = 0; y < resolution; y++) {
         for (let x = 0; x < resolution; x++) {
-          const nx = (x - halfRes) / halfRes;
-          const ny = (y - halfRes) / halfRes;
-          const nz = (z - halfRes) / halfRes;
-          const nw = (w - halfRes) / halfRes;
+          const nx = (x - center) / span;
+          const ny = (y - center) / span;
+          const nz = (z - center) / span;
+          const nw = (w - center) / span;
 
           // 3D SDF for icosahedron
           const sdf3D = sdfIcosahedron(nx, ny, nz, 1.0);
@@ -341,16 +351,18 @@ export function generate4DIcosahedron(resolution) {
 export function generate4DTorus(resolution, majorRadius = 0.4, minorRadius = 0.2) {
   validateResolution(resolution);
   const data = new Float32Array(resolution ** 4 * 4);
-  const halfRes = resolution / 2;
+  // Object space [1, 23] centered at [12, 12, 12, 12]
+  const center = 12;
+  const span = 11;
 
   for (let w = 0; w < resolution; w++) {
     for (let z = 0; z < resolution; z++) {
       for (let y = 0; y < resolution; y++) {
         for (let x = 0; x < resolution; x++) {
-          const nx = (x - halfRes) / halfRes;
-          const ny = (y - halfRes) / halfRes;
-          const nz = (z - halfRes) / halfRes;
-          const nw = (w - halfRes) / halfRes;
+          const nx = (x - center) / span;
+          const ny = (y - center) / span;
+          const nz = (z - center) / span;
+          const nw = (w - center) / span;
 
           // Distance from center in XY plane
           const dxy = Math.sqrt(nx * nx + ny * ny);
