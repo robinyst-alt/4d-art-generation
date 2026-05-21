@@ -22,7 +22,7 @@ export function createQuadrantControls(container) {
       x: { mode: 'free', sliceValue: 12 },
       y: { mode: 'free', sliceValue: 12 },
       z: { mode: 'free', sliceValue: 12 },
-      w: { mode: 'slice', sliceValue: 0 }
+      w: { mode: 'slice', sliceValue: 12 }
     },
     listeners: {}
   };
