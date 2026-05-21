@@ -182,7 +182,8 @@ const TRANSLATIONS = {
     shortcut_nav: 'Navigate W axis',
     shortcut_shape: 'Select shape',
     screenshot: 'Save Image',
-    loading: 'Generating...'
+    loading: 'Generating...',
+    point_spacing: 'Point Spacing'
   },
   zh: {
     title: '4D 艺术',
@@ -205,7 +206,8 @@ const TRANSLATIONS = {
     shortcut_nav: '导航 W 轴',
     shortcut_shape: '选择形状',
     screenshot: '保存图片',
-    loading: '生成中...'
+    loading: '生成中...',
+    point_spacing: '点间距'
   }
 };
 
@@ -373,6 +375,25 @@ function setupControls() {
         appInstance.takeScreenshot();
       }
     });
+  }
+
+  // Point spacing control
+  const pointSpacingContainer = document.querySelector('.point-spacing-controls');
+  if (pointSpacingContainer) {
+    const slider = pointSpacingContainer.querySelector('.slice-slider');
+    const valueDisplay = pointSpacingContainer.querySelector('.value-display');
+
+    if (slider) {
+      slider.addEventListener('input', (e) => {
+        const value = parseInt(e.target.value, 10);
+        if (valueDisplay) {
+          valueDisplay.textContent = value;
+        }
+        if (appInstance) {
+          appInstance.update({ pointSpacing: value });
+        }
+      });
+    }
   }
 }
 
