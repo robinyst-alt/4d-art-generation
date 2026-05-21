@@ -28,12 +28,12 @@ const VALID_THEMES = ['neon', 'sketch', 'firefly', 'aurora', 'cyberpunk'];
  */
 const DEFAULT_STATE = {
   currentShape: 'tesseract',
-  wValue: 0,
+  wValue: 12,
   resolution: 24,
   colorTheme: 'neon',
   isRendering: false,
   matrix: null,
-  pointSpacing: 0,
+  pointSpacing: 1,
   contentHash: null
 };
 
@@ -148,8 +148,8 @@ export function createApp(initialState = {}) {
       const extracted = extractMultiAxisSlice(matrix, quadrantState);
       const pointsData = toThreePoints(extracted.data, resolution, extracted.dimensions);
 
-      // Apply point spacing multiplier
-      const spacingMultiplier = (stateContainer.getState().pointSpacing || 0) + 1;
+      // Apply point spacing multiplier (Level 1=1x, Level 2=2x, etc.)
+      const spacingMultiplier = stateContainer.getState().pointSpacing || 1;
       for (let i = 0; i < pointsData.positions.length; i++) {
         pointsData.positions[i] *= spacingMultiplier;
       }
@@ -189,8 +189,8 @@ export function createApp(initialState = {}) {
     // Convert to Three.js points format
     const pointsData = toThreePoints(sliceData, resolution);
 
-    // Apply point spacing multiplier
-    const spacingMultiplier = (stateContainer.getState().pointSpacing || 0) + 1;
+    // Apply point spacing multiplier (Level 1=1x, Level 2=2x, etc.)
+    const spacingMultiplier = stateContainer.getState().pointSpacing || 1;
     for (let i = 0; i < pointsData.positions.length; i++) {
       pointsData.positions[i] *= spacingMultiplier;
     }

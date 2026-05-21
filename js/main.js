@@ -88,8 +88,8 @@ export async function initApp() {
     ['x', 'y', 'z'].forEach(axis => {
       updateAxisDisplay(quadrantControls, axis, { sliceValue: initialSliceValue });
     });
-    // W starts at 0 (slice mode)
-    updateAxisDisplay(quadrantControls, 'w', { sliceValue: 0 });
+    // W starts at 12 (slice mode, center of 1-24 range)
+    updateAxisDisplay(quadrantControls, 'w', { sliceValue: 12 });
   }
 
   initialized = true;
@@ -358,7 +358,7 @@ function setupControls() {
       if (quadrantControls) {
         ['x', 'y', 'z', 'w'].forEach(axis => {
           const defaultMode = axis === 'w' ? 'slice' : 'free';
-          const defaultValue = axis === 'w' ? 0 : 12;
+          const defaultValue = axis === 'w' ? 12 : 12;
           updateAxisDisplay(quadrantControls, axis, { mode: defaultMode, sliceValue: defaultValue });
         });
       }
