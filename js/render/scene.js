@@ -75,7 +75,7 @@ export function updateGeometry(points, data) {
  * @param {THREE.Scene} scene - Three.js scene
  */
 export function clearScene(scene) {
-  if (!scene) return;
+  if (!scene) return null;
 
   const toRemove = [];
   scene.traverse((child) => {
@@ -89,6 +89,8 @@ export function clearScene(scene) {
     if (child.geometry) child.geometry.dispose();
     if (child.material) child.material.dispose();
   });
+
+  return scene;
 }
 
 /**

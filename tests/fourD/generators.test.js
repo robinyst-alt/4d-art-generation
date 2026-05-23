@@ -42,20 +42,20 @@ describe('4D Generators', () => {
       }
     });
 
-    test('should have edge structure characteristic of a tesseract', () => {
-      const resolution = 8;
+    test('should have solid white fill characteristic', () => {
+      const resolution = 24;
       const result = generateTesseract(resolution);
 
-      // Count non-zero voxels - tesseract should have solid edges
-      let nonZeroCount = 0;
+      // Count voxels with value 1 (white solid fill)
+      let whiteCount = 0;
       for (let i = 0; i < result.length; i += 4) {
-        if (result[i] > 0 || result[i+1] > 0 || result[i+2] > 0) {
-          nonZeroCount++;
+        if (result[i] === 1 && result[i+1] === 1 && result[i+2] === 1) {
+          whiteCount++;
         }
       }
 
-      // A tesseract at this resolution should have significant structure
-      expect(nonZeroCount).toBeGreaterThan(0);
+      // A tesseract at this resolution should have some solid fill
+      expect(whiteCount).toBeGreaterThan(0);
     });
 
     test('should handle minimum resolution (4)', () => {
@@ -93,31 +93,30 @@ describe('4D Generators', () => {
       }
     });
 
-    test('should generate a centered sphere', () => {
-      const resolution = 8;
-      const radius = 0.5;
+    test('should generate a centered sphere with white fill', () => {
+      const resolution = 24;
+      const radius = 0.75;
       const result = generate4DSphere(resolution, radius);
 
-      // Sample center point (w=0.5, z=0.5, y=0.5, x=0.5)
-      const centerIndex = Math.floor(resolution * 0.5) * 4;
-      // Center should be within the sphere (value > 0)
+      // Center point (w=12, z=12, y=12, x=12) should be inside sphere
+      // With radius 0.75 and center at 0, this point should have value > 0
       const hasContent = Array.from(result).some(v => v > 0);
       expect(hasContent).toBe(true);
     });
 
-    test('should handle different radii', () => {
-      const resolution = 8;
-      const smallRadius = 0.25;
-      const largeRadius = 0.75;
+    test('should have more white fill with larger radius', () => {
+      const resolution = 24;
+      const smallRadius = 0.3;
+      const largeRadius = 0.8;
 
       const smallResult = generate4DSphere(resolution, smallRadius);
       const largeResult = generate4DSphere(resolution, largeRadius);
 
-      // Larger radius should have more filled voxels
-      const smallFilled = smallResult.filter(v => v > 0).length;
-      const largeFilled = largeResult.filter(v => v > 0).length;
+      const smallWhiteCount = Array.from(smallResult).filter(v => v === 1).length;
+      const largeWhiteCount = Array.from(largeResult).filter(v => v === 1).length;
 
-      expect(largeFilled).toBeGreaterThan(smallFilled);
+      // Larger radius should contain more white points
+      expect(largeWhiteCount).toBeGreaterThan(smallWhiteCount);
     });
   });
 

@@ -82,6 +82,21 @@ export function enableControls(camera, domElement) {
 }
 
 /**
+ * Update controls based on camera rotation dimensions
+ * When lock count >= 2, camera can only rotate in 2D plane (no rotation)
+ * When lock count >= 3, camera can only observe 1D line (no rotation)
+ * @param {number} rotationDimensions - Number of dimensions for camera rotation
+ */
+export function updateControlsForRotationDimensions(rotationDimensions) {
+  if (controlsInstance) {
+    // rotationDimensions 1 or 0 means no rotation possible
+    // rotationDimensions 2 means only 2D plane rotation (still a rotation)
+    // rotationDimensions 3+ means full 3D rotation
+    controlsInstance.enableRotate = rotationDimensions >= 3;
+  }
+}
+
+/**
  * Set camera field of view
  * @param {THREE.PerspectiveCamera} camera - Three.js camera
  * @param {number} fov - Field of view in degrees
@@ -153,8 +168,7 @@ export function getControls() {
  */
 export function getQuaternion() {
   if (controlsInstance) {
-    // Get the actual camera object inside OrbitControls
-    // This has the correct quaternion after damping
+    // Get the camera from OrbitControls using getObject() method
     return controlsInstance.getObject().quaternion.clone();
   }
   if (cameraInstance) {

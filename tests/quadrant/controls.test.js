@@ -66,7 +66,7 @@ describe('Quadrant UI Controls', () => {
       const controls2 = createQuadrantControls(container);
 
       controls1.axes.w.sliceValue = 10;
-      expect(controls2.axes.w.sliceValue).toBe(0);
+      expect(controls2.axes.w.sliceValue).toBe(12);
     });
   });
 

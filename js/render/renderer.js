@@ -21,13 +21,14 @@ export function createRenderer(canvas = null) {
   const options = {
     antialias: true,
     alpha: true,
+    preserveDrawingBuffer: true,
     powerPreference: 'high-performance'
   };
 
   rendererInstance = new THREE.WebGLRenderer(canvas ? { canvas, ...options } : options);
   rendererInstance.setPixelRatio(pixelRatio);
   rendererInstance.setSize(800, 600);
-  rendererInstance.setClearColor(0x0a0a0f, 1);
+  rendererInstance.setClearColor(0x0a0a0f, 0);
 
   // If no canvas provided, append the auto-created canvas to the container
   if (!canvas && rendererInstance.domElement) {

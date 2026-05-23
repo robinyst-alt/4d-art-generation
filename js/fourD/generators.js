@@ -123,19 +123,11 @@ export function generateTesseract(resolution, size = 0.9) {
                          y * resolution +
                          x) * 4;
 
-            // Edge detection for visual interest - stronger at edges
-            const edgeX = 1 - Math.abs(nx) / halfSize;
-            const edgeY = 1 - Math.abs(ny) / halfSize;
-            const edgeZ = 1 - Math.abs(nz) / halfSize;
-            const edgeW = 1 - Math.abs(nw) / halfSize;
-
-            const edgeMin = Math.min(edgeX, edgeY, edgeZ, edgeW);
-            const edgeValue = edgeMin < 0.1 ? 1.0 : 0.3 + edgeMin * 0.5;
-
-            data[index] = edgeValue;     // R
-            data[index + 1] = edgeValue; // G
-            data[index + 2] = edgeValue; // B
-            data[index + 3] = 1;         // A
+            // Solid shape - all interior points have same brightness
+            data[index] = 1;         // R
+            data[index + 1] = 1;     // G
+            data[index + 2] = 1;     // B
+            data[index + 3] = 1;     // A
           }
         }
       }
@@ -176,15 +168,11 @@ export function generate4DSphere(resolution, radius = 0.5) {
                          y * resolution +
                          x) * 4;
 
-            // Gradient from center
-            const dist = Math.sqrt(distSq);
-            const normalizedDist = dist / radius;
-            const value = 1 - normalizedDist;
-
-            data[index] = value;         // R
-            data[index + 1] = value * 0.8; // G
-            data[index + 2] = value * 0.6; // B
-            data[index + 3] = 1;         // A
+            // Solid sphere - all interior points same brightness
+            data[index] = 1;     // R
+            data[index + 1] = 1; // G
+            data[index + 2] = 1; // B
+            data[index + 3] = 1; // A
           }
         }
       }
@@ -224,12 +212,11 @@ export function generate4DOctahedron(resolution) {
                          y * resolution +
                          x) * 4;
 
-            const value = 1 - manhattanDist / 0.9;
-
-            data[index] = value * 0.5;   // R
-            data[index + 1] = value;     // G
-            data[index + 2] = value * 0.7; // B
-            data[index + 3] = 1;         // A
+            // Solid octahedron - same brightness for all interior points
+            data[index] = 1;       // R
+            data[index + 1] = 1;   // G
+            data[index + 2] = 1;   // B
+            data[index + 3] = 1;   // A
           }
         }
       }
@@ -274,13 +261,11 @@ export function generate4DDodecahedron(resolution) {
                          y * resolution +
                          x) * 4;
 
-            const value = Math.min(1, 1 + totalSDF * 2);
-
-            // Gold/amber color
-            data[index] = value;
-            data[index + 1] = value * 0.75;
-            data[index + 2] = value * 0.35;
-            data[index + 3] = 1;
+            // Solid dodecahedron - same brightness for all interior points
+            data[index] = 1;       // R
+            data[index + 1] = 1;   // G
+            data[index + 2] = 1;   // B
+            data[index + 3] = 1;   // A
           }
         }
       }
@@ -325,13 +310,11 @@ export function generate4DIcosahedron(resolution) {
                          y * resolution +
                          x) * 4;
 
-            const value = Math.min(1, 1 + totalSDF * 2);
-
-            // Cyan/teal color
-            data[index] = value * 0.35;
-            data[index + 1] = value * 0.85;
-            data[index + 2] = value;
-            data[index + 3] = 1;
+            // Solid icosahedron - same brightness for all interior points
+            data[index] = 1;       // R
+            data[index + 1] = 1;   // G
+            data[index + 2] = 1;   // B
+            data[index + 3] = 1;   // A
           }
         }
       }
@@ -377,18 +360,11 @@ export function generate4DTorus(resolution, majorRadius = 0.4, minorRadius = 0.2
                          y * resolution +
                          x) * 4;
 
-            const normalizedDist = distInTube / minorRadius;
-            const value = 1 - normalizedDist;
-
-            // Color based on angle for rainbow effect
-            // Use 2π/3 and 4π/3 for proper RGB phase offsets
-            const TWO_PI_THIRDS = (2 * Math.PI) / 3;
-            const FOUR_PI_THIRDS = (4 * Math.PI) / 3;
-            const angle = Math.atan2(ny, nx);
-            data[index] = 0.5 + 0.5 * Math.cos(angle);           // R
-            data[index + 1] = 0.5 + 0.5 * Math.cos(angle + TWO_PI_THIRDS);   // G
-            data[index + 2] = 0.5 + 0.5 * Math.cos(angle + FOUR_PI_THIRDS);  // B
-            data[index + 3] = 1;                             // A
+            // Solid torus - same brightness for all interior points
+            data[index] = 1;       // R
+            data[index + 1] = 1;   // G
+            data[index + 2] = 1;   // B
+            data[index + 3] = 1;   // A
           }
         }
       }

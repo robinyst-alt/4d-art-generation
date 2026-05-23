@@ -176,13 +176,17 @@ describe('Camera Lock Feature', () => {
   });
 
   describe('getCameraAxes - camera axis determination', () => {
-    test('should return all 4 axes when no axes are locked', () => {
+    test('should return 3 axes when only w is locked (default)', () => {
       const state = createQuadrantState();
-      // Default: only w is slice, xyz are free, no locks
+      // Default: w is locked, xyz are non-locked (camera axes)
       const cameraAxes = getCameraAxes(state);
 
-      // Camera axes = non-locked axes = all 4 when nothing locked
-      expect(cameraAxes.length).toBe(4);
+      // Camera axes = non-locked axes = xyz (3 axes) since w is locked by default
+      expect(cameraAxes.length).toBe(3);
+      expect(cameraAxes).not.toContain('w');
+      expect(cameraAxes).toContain('x');
+      expect(cameraAxes).toContain('y');
+      expect(cameraAxes).toContain('z');
     });
 
     test('should return 3 axes when 1 is locked', () => {

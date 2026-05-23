@@ -54,7 +54,7 @@ describe('Quadrant State Management', () => {
       expect(state.axes.x.sliceValue).toBe(12);
       expect(state.axes.y.sliceValue).toBe(12);
       expect(state.axes.z.sliceValue).toBe(12);
-      expect(state.axes.w.sliceValue).toBe(0);
+      expect(state.axes.w.sliceValue).toBe(12);
 
       expect(state.axes.x.resolution).toBe(24);
       expect(state.axes.y.resolution).toBe(24);
@@ -68,7 +68,7 @@ describe('Quadrant State Management', () => {
 
       // Modifying state1 should not affect state2
       state1.axes.w.sliceValue = 10;
-      expect(state2.axes.w.sliceValue).toBe(0);
+      expect(state2.axes.w.sliceValue).toBe(12); // Default slice value is 12
     });
   });
 

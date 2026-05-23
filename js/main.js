@@ -17,8 +17,11 @@ import {
   setSliceValue,
   setAxisMode,
   setAxisLock,
-  extractMultiAxisSlice
+  extractMultiAxisSlice,
+  getCameraAxes,
+  getCameraRotationDimensions
 } from './quadrant/stateManager.js';
+import { updateControlsForRotationDimensions } from './render/camera.js';
 
 /**
  * Global application instance
@@ -375,16 +378,18 @@ function updateSliceFromQuadrantState() {
 
   const extracted = extractMultiAxisSlice(currentMatrix, quadrantState);
 
-  // Get free axes for updating both DOM and 3D axis indicator
-  const freeAxes = Object.entries(quadrantState.axes)
-    .filter(([_, a]) => a.mode === 'free')
-    .map(([axis, _]) => axis);
+  // Get camera axes (non-locked) for updating both DOM and 3D axis indicator
+  const cameraAxes = getCameraAxes(quadrantState);
 
   // Update DOM axis indicator text
   updateAxisIndicatorDOM();
 
-  // Update 3D axis indicator (which axes are visible based on quadrant state)
-  appInstance.updateAxisIndicator(freeAxes);
+  // Update 3D axis indicator (which axes are visible based on locked state)
+  appInstance.updateAxisIndicator(cameraAxes);
+
+  // Update camera rotation constraints based on lock count
+  const rotationDims = getCameraRotationDimensions(quadrantState);
+  updateControlsForRotationDimensions(rotationDims);
 
   // Update the app's wValue to reflect the primary slice axis
   const sliceAxes = Object.entries(quadrantState.axes)
@@ -409,19 +414,18 @@ function updateAxisIndicatorDOM() {
   const indicator = document.getElementById('axis-indicator');
   if (!indicator) return;
 
-  // Get free axes (displayed axes) and slice axes
-  const freeAxesList = Object.entries(quadrantState.axes)
-    .filter(([_, a]) => a.mode === 'free')
-    .map(([axis, _]) => axis);
+  // Get camera axes (non-locked, displayed axes) and locked axes
+  const cameraAxesList = getCameraAxes(quadrantState);
 
+  const lockedAxes = quadrantState.lockedAxes || [];
   const sliceAxes = Object.entries(quadrantState.axes)
     .filter(([_, a]) => a.mode === 'slice')
     .map(([axis, _]) => axis.toUpperCase());
 
-  // Create indicator text
-  const label = freeAxesList.map(a => a.toUpperCase()).join('') || '—';
-  if (sliceAxes.length > 0) {
-    indicator.querySelector('.axis-indicator__label').textContent = label + ' [' + sliceAxes.join(',') + ']';
+  // Create indicator text - show camera axes as the main view
+  const label = cameraAxesList.map(a => a.toUpperCase()).join('') || '—';
+  if (lockedAxes.length > 0) {
+    indicator.querySelector('.axis-indicator__label').textContent = label + ' [' + lockedAxes.map(a => a.toUpperCase()).join(',') + ']';
   } else {
     indicator.querySelector('.axis-indicator__label').textContent = label;
   }
