@@ -50,10 +50,15 @@ function createEditableInput(currentValue, axis, onCommit, onCancel) {
   input.max = 23;
   input.step = 1;
 
+  // Track if input has already been handled (committed or cancelled)
+  let handled = false;
+
   // Handle Enter key - commit value
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
+      if (handled) return;
+      handled = true;
       const newValue = parseInt(input.value, 10);
       if (!isNaN(newValue) && newValue >= 0 && newValue <= 23) {
         onCommit(newValue);
@@ -62,9 +67,13 @@ function createEditableInput(currentValue, axis, onCommit, onCancel) {
       }
     } else if (e.key === 'Escape') {
       e.preventDefault();
+      if (handled) return;
+      handled = true;
       onCancel();
     } else if (e.key === 'Tab') {
       e.preventDefault();
+      if (handled) return;
+      handled = true;
       const newValue = parseInt(input.value, 10);
       if (!isNaN(newValue) && newValue >= 0 && newValue <= 23) {
         onCommit(newValue);
@@ -80,12 +89,17 @@ function createEditableInput(currentValue, axis, onCommit, onCancel) {
 
   // Handle blur - commit value
   input.addEventListener('blur', () => {
-    const newValue = parseInt(input.value, 10);
-    if (!isNaN(newValue) && newValue >= 0 && newValue <= 23) {
-      onCommit(newValue);
-    } else {
-      onCancel();
-    }
+    // Delay blur handling to allow click events on other elements to fire first
+    setTimeout(() => {
+      if (handled) return;
+      handled = true;
+      const newValue = parseInt(input.value, 10);
+      if (!isNaN(newValue) && newValue >= 0 && newValue <= 23) {
+        onCommit(newValue);
+      } else {
+        onCancel();
+      }
+    }, 10);
   });
 
   // Select all text on focus
@@ -125,6 +139,11 @@ function makeDisplayEditable(displayElement, axis, controls, notifyListeners) {
         displayElement.textContent = newValue;
         displayElement.style.display = '';
 
+        // Remove the input element
+        if (input.parentElement) {
+          input.parentElement.removeChild(input);
+        }
+
         // Update slider
         const slider = displayElement.parentElement.querySelector('.slice-slider');
         if (slider) {
@@ -137,6 +156,11 @@ function makeDisplayEditable(displayElement, axis, controls, notifyListeners) {
         // Cancel - restore display
         displayElement.textContent = currentValue;
         displayElement.style.display = '';
+
+        // Remove the input element
+        if (input.parentElement) {
+          input.parentElement.removeChild(input);
+        }
       }
     );
 
