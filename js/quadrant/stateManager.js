@@ -11,12 +11,15 @@
 // Axis type definition
 const AXES = ['x', 'y', 'z', 'w'];
 
-// Default state: w=0 slice, xyz free
+// Default state: w=12 slice, xyz free
 const DEFAULT_STATE = {
-  x: { mode: 'free', sliceValue: 12, resolution: 24 },
-  y: { mode: 'free', sliceValue: 12, resolution: 24 },
-  z: { mode: 'free', sliceValue: 12, resolution: 24 },
-  w: { mode: 'slice', sliceValue: 0, resolution: 24 }
+  axes: {
+    x: { mode: 'free', sliceValue: 12, resolution: 24 },
+    y: { mode: 'free', sliceValue: 12, resolution: 24 },
+    z: { mode: 'free', sliceValue: 12, resolution: 24 },
+    w: { mode: 'slice', sliceValue: 12, resolution: 24 }
+  },
+  lockedAxes: []
 };
 
 /**
@@ -29,8 +32,9 @@ export function createQuadrantState() {
       x: { mode: 'free', sliceValue: 12, resolution: 24 },
       y: { mode: 'free', sliceValue: 12, resolution: 24 },
       z: { mode: 'free', sliceValue: 12, resolution: 24 },
-      w: { mode: 'slice', sliceValue: 0, resolution: 24 }
-    }
+      w: { mode: 'slice', sliceValue: 12, resolution: 24 }
+    },
+    lockedAxes: []
   };
 }
 
@@ -81,14 +85,14 @@ export function setAxisMode(state, axis, mode) {
 
   // If mode is unchanged, return same state
   if (currentMode === mode) {
-    return { axes: { ...state.axes } };
+    return { axes: { ...state.axes }, lockedAxes: [...(state.lockedAxes || [])] };
   }
 
   // When setting to free, check if it would violate the constraint
   if (mode === 'free' && currentMode === 'slice') {
     if (!canSetAxisToFree(state, axis)) {
       // Constraint violated - return same state
-      return { axes: { ...state.axes } };
+      return { axes: { ...state.axes }, lockedAxes: [...(state.lockedAxes || [])] };
     }
   }
 
@@ -100,7 +104,8 @@ export function setAxisMode(state, axis, mode) {
         ...state.axes[axis],
         mode: mode
       }
-    }
+    },
+    lockedAxes: [...(state.lockedAxes || [])]
   };
 }
 
@@ -119,7 +124,7 @@ export function setSliceValue(state, axis, value) {
 
   // If value unchanged, return same state
   if (state.axes[axis].sliceValue === clampedValue) {
-    return { axes: { ...state.axes } };
+    return { axes: { ...state.axes }, lockedAxes: [...(state.lockedAxes || [])] };
   }
 
   return {
@@ -129,7 +134,8 @@ export function setSliceValue(state, axis, value) {
         ...state.axes[axis],
         sliceValue: clampedValue
       }
-    }
+    },
+    lockedAxes: [...(state.lockedAxes || [])]
   };
 }
 
@@ -167,6 +173,91 @@ export function canSetAxisToFree(state, axis) {
   // If axis is slice, check if there would be at least 1 slice remaining
   const sliceCount = getSliceCount(state);
   return sliceCount > 1;
+}
+
+/**
+ * Set lock status for an axis
+ * When locking an axis that is in 'free' mode, it automatically converts to 'slice'
+ * Locked axes cannot be all unlocked - at least 1 must remain locked
+ * @param {Object} state - Quadrant state
+ * @param {string} axis - Axis name (x, y, z, w)
+ * @param {boolean} isLocked - True to lock, false to unlock
+ * @returns {Object} New state (immutable update)
+ */
+export function setAxisLock(state, axis, isLocked) {
+  validateAxis(axis);
+
+  const currentLocked = state.lockedAxes.includes(axis);
+
+  // If no change, return same state
+  if (currentLocked === isLocked) {
+    return { axes: { ...state.axes }, lockedAxes: [...state.lockedAxes] };
+  }
+
+  // When unlocking the last locked axis, prevent it to maintain minimum 1 lock constraint
+  // The axis keeps its slice mode, just remains locked
+  if (!isLocked && state.lockedAxes.length === 1 && state.lockedAxes.includes(axis)) {
+    // Cannot unlock the last locked axis - constraint: at least 1 lock must remain
+    return { axes: { ...state.axes }, lockedAxes: [...state.lockedAxes] };
+  }
+
+  // When locking, prevent if it would result in 0 camera axes (all 4 locked)
+  if (isLocked && state.lockedAxes.length === 3 && !state.lockedAxes.includes(axis)) {
+    // Cannot lock the 4th axis - would leave no camera axes for rotation
+    return { axes: { ...state.axes }, lockedAxes: [...state.lockedAxes] };
+  }
+
+  let newState = {
+    axes: { ...state.axes },
+    lockedAxes: [...state.lockedAxes]
+  };
+
+  if (isLocked) {
+    // When locking, if axis is in 'free' mode, auto-convert to 'slice'
+    if (newState.axes[axis].mode === 'free') {
+      newState.axes[axis] = { ...newState.axes[axis], mode: 'slice' };
+    }
+    // Add to locked list if not already there
+    if (!newState.lockedAxes.includes(axis)) {
+      newState.lockedAxes.push(axis);
+    }
+  } else {
+    // When unlocking, remove from locked list
+    newState.lockedAxes = newState.lockedAxes.filter(a => a !== axis);
+  }
+
+  return newState;
+}
+
+/**
+ * Get list of axes that are locked
+ * @param {Object} state - Quadrant state
+ * @returns {string[]} Array of locked axis names
+ */
+export function getLockedAxes(state) {
+  return [...(state.lockedAxes || [])];
+}
+
+/**
+ * Get list of camera axes (non-locked axes)
+ * Camera axes = all 4 axes minus locked axes
+ * These are the axes that participate in camera rotation
+ * @param {Object} state - Quadrant state
+ * @returns {string[]} Array of camera axis names
+ */
+export function getCameraAxes(state) {
+  const locked = state.lockedAxes || [];
+  return AXES.filter(axis => !locked.includes(axis));
+}
+
+/**
+ * Get the number of dimensions available for camera rotation
+ * Based on how many axes are not locked
+ * @param {Object} state - Quadrant state
+ * @returns {number} Camera rotation dimensions (1-4)
+ */
+export function getCameraRotationDimensions(state) {
+  return getCameraAxes(state).length;
 }
 
 /**
@@ -273,10 +364,8 @@ function extract2DSlice(matrix, resolution, sliceAxes, sliceValues, dimensions) 
     for (let j = 0; j < resolution; j++) {
       // Map indices to axes
       const axisIndices = { ...fixedValues };
-      if (freeAxes[0] === 'x' || freeAxes[0] === 'y' || freeAxes[0] === 'z' || freeAxes[0] === 'w') {
-        axisIndices[freeAxes[0]] = i;
-        axisIndices[freeAxes[1]] = j;
-      }
+      axisIndices[freeAxes[0]] = i;
+      axisIndices[freeAxes[1]] = j;
 
       const srcIndex = (axisIndices.w * resolution * resolution * resolution +
                        axisIndices.z * resolution * resolution +
