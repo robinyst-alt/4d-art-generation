@@ -87,11 +87,10 @@ function createEditableInput(currentValue, axis, onCommit, onCancel) {
     }
   });
 
-  // Handle blur - commit value
+  // Handle blur - commit value immediately if not already handled
   input.addEventListener('blur', () => {
-    // Delay blur handling to allow click events on other elements to fire first
-    setTimeout(() => {
-      if (handled) return;
+    // Only commit if not already handled and input still has a valid parent
+    if (!handled && input.parentElement) {
       handled = true;
       const newValue = parseInt(input.value, 10);
       if (!isNaN(newValue) && newValue >= 0 && newValue <= 23) {
@@ -99,7 +98,7 @@ function createEditableInput(currentValue, axis, onCommit, onCancel) {
       } else {
         onCancel();
       }
-    }, 10);
+    }
   });
 
   // Select all text on focus
@@ -121,7 +120,10 @@ function makeDisplayEditable(displayElement, axis, controls, notifyListeners) {
   displayElement.style.cursor = 'pointer';
   displayElement.title = 'Click to edit value (0-23)';
 
-  displayElement.addEventListener('click', () => {
+  displayElement.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+
     // Don't trigger if already editing
     if (displayElement.querySelector('.value-input')) {
       return;

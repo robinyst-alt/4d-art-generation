@@ -500,7 +500,10 @@ function makePointSpacingEditable(displayElement, slider) {
   displayElement.style.cursor = 'pointer';
   displayElement.title = 'Click to edit spacing (1-6)';
 
-  displayElement.addEventListener('click', () => {
+  displayElement.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+
     // Don't trigger if already editing
     if (displayElement.querySelector('.value-input')) {
       return;
@@ -534,6 +537,7 @@ function makePointSpacingEditable(displayElement, slider) {
         appInstance.update({ pointSpacing: clampedValue });
       }
 
+      // Remove input synchronously
       if (input.parentElement) {
         input.parentElement.removeChild(input);
       }
@@ -546,6 +550,7 @@ function makePointSpacingEditable(displayElement, slider) {
       displayElement.textContent = currentValue;
       displayElement.style.display = '';
 
+      // Remove input synchronously
       if (input.parentElement) {
         input.parentElement.removeChild(input);
       }
@@ -554,17 +559,21 @@ function makePointSpacingEditable(displayElement, slider) {
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
+        e.stopPropagation();
         commitValue(parseInt(input.value, 10));
       } else if (e.key === 'Escape') {
         e.preventDefault();
+        e.stopPropagation();
         cancelEdit();
       }
     });
 
+    // Blur commits immediately without setTimeout, using handled flag to prevent double-commit
     input.addEventListener('blur', () => {
-      setTimeout(() => {
+      // Only commit if not already handled and input still has a valid parent
+      if (!handled && input.parentElement) {
         commitValue(parseInt(input.value, 10));
-      }, 10);
+      }
     });
 
     input.addEventListener('focus', () => {
