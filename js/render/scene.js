@@ -123,3 +123,91 @@ export function setSceneLighting(scene, theme) {
 export function getScene() {
   return sceneInstance;
 }
+
+/**
+ * Create a 3D axis indicator widget
+ * Creates a small coordinate system with x, y, z axes as arrows
+ * Only axes in "free" mode (not slice) are displayed
+ * Uses grayscale coloring for all axes
+ * @param {number} size - Size of the axis indicator
+ * @param {string[]} freeAxes - Array of axis names in free mode (e.g., ['x', 'y', 'z'])
+ * @returns {THREE.Group} Group containing the axis lines
+ */
+export function createAxisIndicator(size = 1, freeAxes = ['x', 'y', 'z']) {
+  const group = new THREE.Group();
+
+  // Create arrow for each axis that is in free mode
+  const axisConfigs = [
+    { name: 'x', direction: new THREE.Vector3(1, 0, 0) },
+    { name: 'y', direction: new THREE.Vector3(0, 1, 0) },
+    { name: 'z', direction: new THREE.Vector3(0, 0, 1) }
+  ];
+
+  // Filter to only free axes
+  const visibleAxes = axisConfigs.filter(axis => freeAxes.includes(axis.name));
+
+  visibleAxes.forEach(({ name, direction }) => {
+    // Create line geometry
+    const points = [
+      new THREE.Vector3(0, 0, 0),
+      direction.clone().multiplyScalar(size)
+    ];
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    const material = new THREE.LineBasicMaterial({ linewidth: 2 });
+    material.color.setRGB(0.8, 0.8, 0.8); // Grayscale per PRD
+    const line = new THREE.Line(geometry, material);
+    group.add(line);
+
+    // Create arrow head
+    const arrowLength = size * 0.15;
+    const arrowWidth = arrowLength * 0.5;
+    const arrowGeom = new THREE.ConeGeometry(arrowWidth, arrowLength, 8);
+    const arrowMaterial = new THREE.MeshBasicMaterial();
+    arrowMaterial.color.setRGB(0.8, 0.8, 0.8); // Grayscale per PRD
+    const arrowMesh = new THREE.Mesh(arrowGeom, arrowMaterial);
+
+    // Position arrow at the end of the line
+    arrowMesh.position.copy(direction.clone().multiplyScalar(size - arrowLength * 0.5));
+
+    // Orient arrow to point along the axis direction
+    if (name === 'x') {
+      arrowMesh.rotation.z = -Math.PI / 2;
+    } else if (name === 'z') {
+      arrowMesh.rotation.x = Math.PI / 2;
+    }
+    // 'y' default orientation is already pointing up
+
+    group.add(arrowMesh);
+
+    // Create label sprite for axis
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#cccccc';
+    ctx.font = 'bold 40px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(name.toUpperCase(), 32, 32);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+    const sprite = new THREE.Sprite(spriteMaterial);
+    sprite.position.copy(direction.clone().multiplyScalar(size * 1.2));
+    sprite.scale.set(0.2, 0.2, 0.2);
+    group.add(sprite);
+  });
+
+  return group;
+}
+
+/**
+ * Add an axis indicator to the scene
+ * @param {THREE.Scene} scene - Three.js scene
+ * @param {THREE.Group} axisGroup - Axis indicator group
+ */
+export function addAxisIndicator(scene, axisGroup) {
+  if (scene && axisGroup) {
+    scene.add(axisGroup);
+  }
+}

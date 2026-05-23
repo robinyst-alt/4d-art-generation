@@ -40,6 +40,7 @@ let initialized = false;
 let quadrantState = null;
 let quadrantControls = null;
 let matrix = null;
+let focusedAxis = 'w'; // Currently focused axis for keyboard control
 
 /**
  * Initialize the application
@@ -64,6 +65,10 @@ export async function initApp() {
   const savedTheme = localStorage.getItem('4d-art-theme') || 'neon';
   document.documentElement.setAttribute('data-theme', savedTheme);
 
+  // Apply language from storage or default (must be before initApp to ensure DOM is ready)
+  const savedLang = localStorage.getItem('4d-art-lang') || 'zh';
+  currentLang = savedLang;
+
   // Create app instance
   appInstance = createApp();
 
@@ -80,16 +85,6 @@ export async function initApp() {
     if (state.contentHash) {
       hashElement.textContent = state.contentHash;
     }
-  }
-
-  // Set initial quadrant state to middle of range
-  const initialSliceValue = Math.floor(24 / 2);
-  if (quadrantControls) {
-    ['x', 'y', 'z'].forEach(axis => {
-      updateAxisDisplay(quadrantControls, axis, { sliceValue: initialSliceValue });
-    });
-    // W starts at 12 (slice mode, center of 1-24 range)
-    updateAxisDisplay(quadrantControls, 'w', { sliceValue: 12 });
   }
 
   initialized = true;
@@ -155,6 +150,26 @@ async function onDOMContentLoaded() {
 
   // Set up keyboard shortcuts
   document.addEventListener('keydown', handleKeyboardShortcuts);
+
+  // Set up axis indicator toggle (collapsible widget)
+  setupAxisIndicatorToggle();
+}
+
+/**
+ * Set up axis indicator collapsible toggle
+ */
+function setupAxisIndicatorToggle() {
+  const axisIndicator = document.getElementById('axis-indicator');
+  const toggleBtn = axisIndicator?.querySelector('.axis-indicator__toggle');
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      const isExpanded = toggleBtn.getAttribute('aria-expanded') === 'true';
+      toggleBtn.setAttribute('aria-expanded', (!isExpanded).toString());
+      axisIndicator.classList.toggle('axis-indicator--collapsed', isExpanded);
+      toggleBtn.textContent = isExpanded ? '+' : '−';
+    });
+  }
 }
 
 /**
@@ -162,6 +177,7 @@ async function onDOMContentLoaded() {
  */
 const TRANSLATIONS = {
   en: {
+    quadrant_title: 'Four-Axis Control',
     title: '4D Art',
     subtitle: '4D Pixel Matrix Generator',
     shape: 'Shape',
@@ -186,6 +202,7 @@ const TRANSLATIONS = {
     point_spacing: 'Point Spacing'
   },
   zh: {
+    quadrant_title: '四轴控制',
     title: '4D 艺术',
     subtitle: '4D 像素矩阵生成器',
     shape: '形状',
@@ -203,7 +220,7 @@ const TRANSLATIONS = {
     info_points: '点数',
     info_hash: '哈希',
     shortcuts: '快捷键',
-    shortcut_nav: '导航 W 轴',
+    shortcut_nav: '控制聚焦象限滑条',
     shortcut_shape: '选择形状',
     screenshot: '保存图片',
     loading: '生成中...',
@@ -247,10 +264,8 @@ function setupLanguageToggle() {
   const langToggle = document.getElementById('lang-toggle');
   const langLabel = langToggle?.querySelector('.lang-toggle__label');
 
-  // Load saved language preference
-  const savedLang = localStorage.getItem('4d-art-lang') || 'en';
-  currentLang = savedLang;
-  applyLanguage(savedLang);
+  // currentLang is already set from localStorage in initApp
+  applyLanguage(currentLang);
 
   if (langToggle) {
     langToggle.addEventListener('click', () => {
@@ -299,6 +314,9 @@ function setupQuadrantControls() {
   ['x', 'y', 'z', 'w'].forEach(axis => {
     // Mode toggle
     onAxisChange(quadrantControls, axis, 'mode', (newMode) => {
+      // Update focused axis to the one being changed
+      focusedAxis = axis;
+
       const prevState = quadrantState;
       quadrantState = setAxisMode(quadrantState, axis, newMode);
 
@@ -311,6 +329,9 @@ function setupQuadrantControls() {
 
     // Value change
     onAxisChange(quadrantControls, axis, 'value', (newValue) => {
+      // Update focused axis to the one being changed
+      focusedAxis = axis;
+
       quadrantState = setSliceValue(quadrantState, axis, newValue);
       updateSliceFromQuadrantState();
     });
@@ -322,10 +343,24 @@ function setupQuadrantControls() {
  * Extracts multi-axis slice and updates the 3D scene
  */
 function updateSliceFromQuadrantState() {
-  if (!appInstance || !quadrantState || !matrix) return;
+  if (!appInstance || !quadrantState) return;
 
   const state = appInstance.getState();
-  const extracted = extractMultiAxisSlice(matrix, quadrantState);
+  const currentMatrix = state.matrix;
+  if (!currentMatrix) return;
+
+  const extracted = extractMultiAxisSlice(currentMatrix, quadrantState);
+
+  // Get free axes for updating both DOM and 3D axis indicator
+  const freeAxes = Object.entries(quadrantState.axes)
+    .filter(([_, a]) => a.mode === 'free')
+    .map(([axis, _]) => axis);
+
+  // Update DOM axis indicator text
+  updateAxisIndicatorDOM();
+
+  // Update 3D axis indicator (which axes are visible based on quadrant state)
+  appInstance.updateAxisIndicator(freeAxes);
 
   // Update the app's wValue to reflect the primary slice axis
   const sliceAxes = Object.entries(quadrantState.axes)
@@ -338,7 +373,33 @@ function updateSliceFromQuadrantState() {
     const sliceValue = quadrantState.axes[primarySliceAxis].sliceValue;
 
     // Update the app state with the new slice
-    appInstance.updateSlice(matrix, state.resolution, sliceValue, quadrantState);
+    appInstance.updateSlice(currentMatrix, state.resolution, sliceValue, quadrantState);
+  }
+}
+
+/**
+ * Update the axis indicator DOM display
+ * Shows which axes are currently free (displayed in view) as text labels
+ */
+function updateAxisIndicatorDOM() {
+  const indicator = document.getElementById('axis-indicator');
+  if (!indicator) return;
+
+  // Get free axes (displayed axes) and slice axes
+  const freeAxesList = Object.entries(quadrantState.axes)
+    .filter(([_, a]) => a.mode === 'free')
+    .map(([axis, _]) => axis);
+
+  const sliceAxes = Object.entries(quadrantState.axes)
+    .filter(([_, a]) => a.mode === 'slice')
+    .map(([axis, _]) => axis.toUpperCase());
+
+  // Create indicator text
+  const label = freeAxesList.map(a => a.toUpperCase()).join('') || '—';
+  if (sliceAxes.length > 0) {
+    indicator.querySelector('.axis-indicator__label').textContent = label + ' [' + sliceAxes.join(',') + ']';
+  } else {
+    indicator.querySelector('.axis-indicator__label').textContent = label;
   }
 }
 
@@ -409,44 +470,56 @@ function handleKeyboardShortcuts(event) {
     event.preventDefault();
   }
 
-  // Get slice axes from quadrant state
-  const sliceAxes = quadrantState
-    ? Object.entries(quadrantState.axes)
-        .filter(([_, axis]) => axis.mode === 'slice')
-        .map(([axis, _]) => axis)
-    : ['w'];
-
-  // Get the primary slice axis (first slice axis found, default to w)
-  const primaryAxis = sliceAxes.length > 0 ? sliceAxes[0] : 'w';
-  const currentValue = quadrantState?.axes[primaryAxis]?.sliceValue ?? 12;
+  // Get current value of the focused axis
+  const currentValue = quadrantState?.axes[focusedAxis]?.sliceValue ?? 12;
 
   switch (event.key) {
     case 'ArrowLeft':
-      // Decrease primary slice axis value
+      // Decrease focused axis slice value
       if (currentValue > 0) {
         const newValue = currentValue - 1;
         if (quadrantControls) {
-          updateAxisDisplay(quadrantControls, primaryAxis, { sliceValue: newValue });
+          updateAxisDisplay(quadrantControls, focusedAxis, { sliceValue: newValue });
         }
         if (quadrantState) {
-          quadrantState = setSliceValue(quadrantState, primaryAxis, newValue);
+          quadrantState = setSliceValue(quadrantState, focusedAxis, newValue);
           updateSliceFromQuadrantState();
         }
       }
       break;
 
     case 'ArrowRight':
-      // Increase primary slice axis value
+      // Increase focused axis slice value
       if (currentValue < 23) {
         const newValue = currentValue + 1;
         if (quadrantControls) {
-          updateAxisDisplay(quadrantControls, primaryAxis, { sliceValue: newValue });
+          updateAxisDisplay(quadrantControls, focusedAxis, { sliceValue: newValue });
         }
         if (quadrantState) {
-          quadrantState = setSliceValue(quadrantState, primaryAxis, newValue);
+          quadrantState = setSliceValue(quadrantState, focusedAxis, newValue);
           updateSliceFromQuadrantState();
         }
       }
+      break;
+
+    case 'x':
+    case 'X':
+      focusedAxis = 'x';
+      break;
+
+    case 'y':
+    case 'Y':
+      focusedAxis = 'y';
+      break;
+
+    case 'z':
+    case 'Z':
+      focusedAxis = 'z';
+      break;
+
+    case 'w':
+    case 'W':
+      focusedAxis = 'w';
       break;
 
     case '1':

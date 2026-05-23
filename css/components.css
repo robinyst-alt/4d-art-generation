@@ -34,6 +34,55 @@
   z-index: var(--z-overlay);
 }
 
+/* Axis Indicator */
+.axis-indicator {
+  position: absolute;
+  top: var(--space-4);
+  left: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-surface-elevated);
+  border: 1px solid var(--color-surface-overlay);
+  border-radius: var(--radius-md);
+  z-index: var(--z-overlay);
+  overflow: hidden;
+}
+
+.axis-indicator__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  cursor: pointer;
+  transition: color var(--duration-fast) ease;
+}
+
+.axis-indicator__toggle:hover {
+  color: var(--color-text);
+}
+
+.axis-indicator__content {
+  display: block;
+  padding: var(--space-2);
+  pointer-events: none;
+}
+
+.axis-indicator__canvas {
+  display: block;
+  background-color: var(--color-surface-base);
+  border-radius: var(--radius-sm);
+}
+
+.axis-indicator--collapsed .axis-indicator__content {
+  display: none;
+}
+
 /* ============================================
  * Controls Panel
  * ============================================ */

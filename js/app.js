@@ -10,8 +10,8 @@
 
 import * as THREE from 'three';
 import { createState, dispatch, subscribe, ACTIONS } from './ui/state.js';
-import { createScene, addMesh, updateGeometry, clearScene, setSceneLighting } from './render/scene.js';
-import { createCamera, enableControls, setPosition, setFOV, lookAt, updateControls } from './render/camera.js';
+import { createScene, addMesh, updateGeometry, clearScene, setSceneLighting, createAxisIndicator, addAxisIndicator } from './render/scene.js';
+import { createCamera, enableControls, setPosition, setFOV, lookAt, updateControls, getQuaternion } from './render/camera.js';
 import { createRenderer, render, setAnimationLoop, startAnimationLoop, stopAnimationLoop, resizeToFit, captureScreenshot } from './render/renderer.js';
 import { extractSlice, toThreePoints } from './fourD/slice.js';
 import { generate } from './fourD/generators.js';
@@ -54,6 +54,7 @@ export function createApp(initialState = {}) {
   let camera = null;
   let renderer = null;
   let controls = null;
+  let axisIndicatorGroup = null;
 
   // Current points mesh
   let currentPoints = null;
@@ -84,6 +85,11 @@ export function createApp(initialState = {}) {
     const currentState = stateContainer.getState();
     setSceneLighting(scene, currentState.colorTheme);
 
+    // Create and add axis indicator
+    axisIndicatorGroup = createAxisIndicator(0.5);
+    axisIndicatorGroup.position.set(-1.5, -1.5, 0);
+    addAxisIndicator(scene, axisIndicatorGroup);
+
     // Set up animation loop
     setAnimationLoop(renderer, animate);
 
@@ -99,6 +105,14 @@ export function createApp(initialState = {}) {
   function animate() {
     // Update controls
     updateControls();
+
+    // Sync axis indicator rotation with camera
+    if (axisIndicatorGroup) {
+      const q = getQuaternion();
+      if (q) {
+        axisIndicatorGroup.quaternion.copy(q);
+      }
+    }
 
     // Render scene
     if (scene && camera) {
@@ -380,6 +394,36 @@ export function createApp(initialState = {}) {
   }
 
   /**
+   * Update the axis indicator based on current free axes
+   * Recreates the axis indicator group with only the free axes
+   * @param {string[]} freeAxes - Array of axis names in free mode (e.g., ['x', 'y', 'z'])
+   */
+  function updateAxisIndicator(freeAxes) {
+    if (!scene) return;
+
+    // Remove existing axis indicator
+    if (axisIndicatorGroup) {
+      scene.remove(axisIndicatorGroup);
+      // Dispose of old resources
+      axisIndicatorGroup.traverse((child) => {
+        if (child.geometry) child.geometry.dispose();
+        if (child.material) {
+          if (Array.isArray(child.material)) {
+            child.material.forEach(m => m.dispose());
+          } else {
+            child.material.dispose();
+          }
+        }
+      });
+    }
+
+    // Create new axis indicator with updated free axes
+    axisIndicatorGroup = createAxisIndicator(0.5, freeAxes);
+    axisIndicatorGroup.position.set(-1.5, -1.5, 0);
+    addAxisIndicator(scene, axisIndicatorGroup);
+  }
+
+  /**
    * Update content hash display in DOM
    */
   function updateHashDisplay() {
@@ -398,6 +442,7 @@ export function createApp(initialState = {}) {
     update,
     generate: generateShape,
     updateSlice,
+    updateAxisIndicator,
     setTheme,
     getState,
     start,

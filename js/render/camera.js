@@ -145,3 +145,14 @@ export function getCamera() {
 export function getControls() {
   return controlsInstance;
 }
+
+/**
+ * Get the current camera quaternion for sync purposes
+ * @returns {THREE.Quaternion|null} Current camera quaternion
+ */
+export function getQuaternion() {
+  if (cameraInstance) {
+    return cameraInstance.quaternion.clone();
+  }
+  return null;
+}

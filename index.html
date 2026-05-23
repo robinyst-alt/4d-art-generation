@@ -74,6 +74,11 @@
 
   <!-- Canvas Container -->
   <div id="canvas-container" class="canvas-container theme-canvas" role="img" aria-label="4D shape visualization canvas">
+    <!-- Axis indicator overlay - collapsible 3D coordinate widget -->
+    <div id="axis-indicator" class="axis-indicator" aria-live="polite">
+      <button class="axis-indicator__toggle" aria-label="Toggle axis indicator" aria-expanded="true">−</button>
+      <span class="axis-indicator__label">XYZ [W]</span>
+    </div>
     <!-- Three.js canvas will be inserted here -->
   </div>
 
@@ -117,9 +122,9 @@
         </div>
         <div class="axis-control" data-axis="y">
           <span class="axis-control__label">Y</span>
-          <button class="mode-toggle" data-mode="slice" aria-label="Y axis mode: slice">切片</button>
-          <input type="range" class="slice-slider" min="0" max="23" value="7" aria-label="Y axis slice value" />
-          <span class="value-display" aria-live="polite">7</span>
+          <button class="mode-toggle" data-mode="free" aria-label="Y axis mode: free">自由</button>
+          <input type="range" class="slice-slider" min="0" max="23" value="12" aria-label="Y axis slice value" />
+          <span class="value-display" aria-live="polite">12</span>
         </div>
         <div class="axis-control" data-axis="z">
           <span class="axis-control__label">Z</span>
