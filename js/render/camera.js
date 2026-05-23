@@ -168,8 +168,8 @@ export function getControls() {
  */
 export function getQuaternion() {
   if (controlsInstance) {
-    // Get the camera from OrbitControls using getObject() method
-    return controlsInstance.getObject().quaternion.clone();
+    // Access camera directly from OrbitControls object property
+    return controlsInstance.object.quaternion.clone();
   }
   if (cameraInstance) {
     return cameraInstance.quaternion.clone();
