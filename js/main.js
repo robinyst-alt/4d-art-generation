@@ -16,6 +16,7 @@ import {
   createQuadrantState,
   setSliceValue,
   setAxisMode,
+  setAxisLock,
   extractMultiAxisSlice
 } from './quadrant/stateManager.js';
 
@@ -310,6 +311,13 @@ function setupQuadrantControls() {
   // Create quadrant controls manager
   quadrantControls = createQuadrantControls(container);
 
+  // Initialize UI with default state (including W as locked)
+  ['x', 'y', 'z', 'w'].forEach(axis => {
+    const isLocked = quadrantState.lockedAxes.includes(axis);
+    const mode = quadrantState.axes[axis].mode;
+    updateAxisDisplay(quadrantControls, axis, { mode, locked: isLocked });
+  });
+
   // Listen for axis changes and update state
   ['x', 'y', 'z', 'w'].forEach(axis => {
     // Mode toggle
@@ -333,6 +341,22 @@ function setupQuadrantControls() {
       focusedAxis = axis;
 
       quadrantState = setSliceValue(quadrantState, axis, newValue);
+      updateSliceFromQuadrantState();
+    });
+
+    // Lock toggle
+    onAxisChange(quadrantControls, axis, 'lock', (newLocked) => {
+      const prevState = quadrantState;
+      quadrantState = setAxisLock(quadrantState, axis, newLocked);
+
+      // Sync UI with validated state
+      const actualLocked = quadrantState.lockedAxes.includes(axis);
+      updateAxisDisplay(quadrantControls, axis, { locked: actualLocked });
+
+      // Sync mode display (locked = slice)
+      const actualMode = quadrantState.axes[axis].mode;
+      updateAxisDisplay(quadrantControls, axis, { mode: actualMode });
+
       updateSliceFromQuadrantState();
     });
   });

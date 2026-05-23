@@ -117,24 +117,28 @@
         <div class="axis-control" data-axis="x">
           <span class="axis-control__label">X</span>
           <button class="mode-toggle" data-mode="free" aria-label="X axis mode: free">自由</button>
+          <button class="lock-toggle" data-locked="false" aria-label="X axis lock">○</button>
           <input type="range" class="slice-slider" min="0" max="23" value="12" aria-label="X axis slice value" />
           <span class="value-display" aria-live="polite">12</span>
         </div>
         <div class="axis-control" data-axis="y">
           <span class="axis-control__label">Y</span>
           <button class="mode-toggle" data-mode="free" aria-label="Y axis mode: free">自由</button>
+          <button class="lock-toggle" data-locked="false" aria-label="Y axis lock">○</button>
           <input type="range" class="slice-slider" min="0" max="23" value="12" aria-label="Y axis slice value" />
           <span class="value-display" aria-live="polite">12</span>
         </div>
         <div class="axis-control" data-axis="z">
           <span class="axis-control__label">Z</span>
           <button class="mode-toggle" data-mode="free" aria-label="Z axis mode: free">自由</button>
+          <button class="lock-toggle" data-locked="false" aria-label="Z axis lock">○</button>
           <input type="range" class="slice-slider" min="0" max="23" value="12" aria-label="Z axis slice value" />
           <span class="value-display" aria-live="polite">12</span>
         </div>
         <div class="axis-control" data-axis="w">
           <span class="axis-control__label">W</span>
           <button class="mode-toggle" data-mode="slice" aria-label="W axis mode: slice">切片</button>
+          <button class="lock-toggle" data-locked="true" aria-label="W axis lock">🔒</button>
           <input type="range" class="slice-slider" min="0" max="23" value="12" aria-label="W axis slice value" />
           <span class="value-display" aria-live="polite">12</span>
         </div>

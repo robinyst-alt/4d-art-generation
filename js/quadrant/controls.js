@@ -55,6 +55,16 @@ function bindAxisEvents(container, controls) {
       notifyListeners(controls, axis, 'mode', newMode);
     });
 
+    // Lock toggle click
+    const lockButton = axisElement.querySelector('.lock-toggle');
+    if (lockButton) {
+      lockButton.addEventListener('click', () => {
+        const currentLocked = lockButton.dataset.locked === 'true';
+        const newLocked = !currentLocked;
+        notifyListeners(controls, axis, 'lock', newLocked);
+      });
+    }
+
     // Slider input
     slider.addEventListener('input', (e) => {
       const value = parseInt(e.target.value, 10);
@@ -122,13 +132,21 @@ export function updateAxisDisplay(controls, axis, updates) {
     slider.value = clampedValue;
     valueDisplay.textContent = clampedValue;
   }
+
+  if (updates.locked !== undefined) {
+    const lockButton = axisElement.querySelector('.lock-toggle');
+    if (lockButton) {
+      lockButton.dataset.locked = updates.locked.toString();
+      lockButton.textContent = updates.locked ? '🔒' : '○';
+    }
+  }
 }
 
 /**
  * Register callback for axis changes
  * @param {Object} controls - Controls manager object
  * @param {string} axis - Axis name
- * @param {string} property - Property name ('mode' or 'value')
+ * @param {string} property - Property name ('mode', 'value', or 'lock')
  * @param {Function} callback - Callback function(newValue)
  * @returns {Function} Unregister function
  */

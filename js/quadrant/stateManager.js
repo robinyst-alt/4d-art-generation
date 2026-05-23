@@ -34,7 +34,7 @@ export function createQuadrantState() {
       z: { mode: 'free', sliceValue: 12, resolution: 24 },
       w: { mode: 'slice', sliceValue: 12, resolution: 24 }
     },
-    lockedAxes: []
+    lockedAxes: ['w']  // W is default locked axis per PRD
   };
 }
 
