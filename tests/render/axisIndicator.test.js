@@ -166,14 +166,13 @@ describe('Axis Indicator', () => {
 
   describe('F-108: axis visibility based on locked axes', () => {
     test('should display 4 axes when 0 are locked', () => {
-      // When no axes are locked, all 4 axes are camera axes
+      // When no axes are locked, all 4 axes are camera axes (XYZW)
       const cameraAxes = ['x', 'y', 'z', 'w'];
       const indicator = createAxisIndicator(1, cameraAxes);
 
       const lines = indicator.children.filter(child => child instanceof THREE.Line);
-      // Note: current implementation only shows X, Y, Z (3 lines)
-      // This test documents current behavior
-      expect(lines.length).toBe(3);
+      // Per PRD F-108: all 4 axes should be displayed when 0 are locked
+      expect(lines.length).toBe(4);
     });
 
     test('should display 3 axes when 1 is locked', () => {

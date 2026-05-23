@@ -2,7 +2,7 @@
 
 **状态**：Phase 1 实现完成
 **创建时间**：2026-05-10
-**文档版本**：v0.12
+**文档版本**：v0.13
 **最后更新**：2026-05-23
 
 ---
@@ -38,6 +38,10 @@
 - 3D 视角可自由旋转、缩放
 - Content Hash 生成（SHA-256 前 12 字符）
 - 一键截图自动保存
+- 坐标轴指示器（显示相机轴 XYZW，随相机视角同步旋转）
+- 相机锁定功能（锁定轴自动转为切片，约束最小 1 个锁定）
+- 切片值可点击编辑（0-23）
+- 点间距值可点击编辑（1-6）
 
 **Phase 1 测试覆盖率**：
 - 模块级覆盖率：100%（hash, generators, slice, controls, stateManager）
@@ -398,8 +402,8 @@
 | F-105 | Three.js 3D 渲染器 | `js/render/scene.js`, `js/render/camera.js`, `js/render/renderer.js` | **已实现** |
 | F-106 | Content Hash 生成 | `js/utils/hash.js`, `js/app.js` | **已实现** |
 | F-107 | 像素点密度控制 | `js/app.js`, `js/ui/state.js` | **已实现** |
-| F-108 | 坐标轴指示器 | `js/render/scene.js`, `js/render/camera.js`, `css/components.css`, `index.html` | **待实现** |
-| F-109 | 相机锁定功能 | `js/quadrant/controls.js`, `js/quadrant/stateManager.js`, `js/render/camera.js` | **待实现** |
+| F-108 | 坐标轴指示器 | `js/render/scene.js`, `js/render/camera.js`, `js/quadrant/stateManager.js`, `css/components.css`, `index.html` | **已实现** |
+| F-109 | 相机锁定功能 | `js/quadrant/controls.js`, `js/quadrant/stateManager.js`, `js/render/camera.js`, `js/main.js` | **已实现** |
 
 ## 7. 代码提交
 
