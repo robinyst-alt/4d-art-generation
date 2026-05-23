@@ -472,6 +472,11 @@ function setupControls() {
     const slider = pointSpacingContainer.querySelector('.slice-slider');
     const valueDisplay = pointSpacingContainer.querySelector('.value-display');
 
+    // Make point spacing value display editable
+    if (valueDisplay) {
+      makePointSpacingEditable(valueDisplay, slider);
+    }
+
     if (slider) {
       slider.addEventListener('input', (e) => {
         const value = parseInt(e.target.value, 10);
@@ -484,6 +489,93 @@ function setupControls() {
       });
     }
   }
+}
+
+/**
+ * Make point spacing value display editable via click
+ * @param {HTMLElement} displayElement - The .value-display element
+ * @param {HTMLElement} slider - The slider element
+ */
+function makePointSpacingEditable(displayElement, slider) {
+  displayElement.style.cursor = 'pointer';
+  displayElement.title = 'Click to edit spacing (1-6)';
+
+  displayElement.addEventListener('click', () => {
+    // Don't trigger if already editing
+    if (displayElement.querySelector('.value-input')) {
+      return;
+    }
+
+    const currentValue = parseInt(displayElement.textContent, 10) || 1;
+
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.className = 'value-input';
+    input.value = currentValue;
+    input.min = 1;
+    input.max = 6;
+    input.step = 1;
+
+    let handled = false;
+
+    const commitValue = (newValue) => {
+      if (handled) return;
+      handled = true;
+
+      const clampedValue = Math.max(1, Math.min(6, newValue));
+      displayElement.textContent = clampedValue;
+      displayElement.style.display = '';
+
+      if (slider) {
+        slider.value = clampedValue;
+      }
+
+      if (appInstance) {
+        appInstance.update({ pointSpacing: clampedValue });
+      }
+
+      if (input.parentElement) {
+        input.parentElement.removeChild(input);
+      }
+    };
+
+    const cancelEdit = () => {
+      if (handled) return;
+      handled = true;
+
+      displayElement.textContent = currentValue;
+      displayElement.style.display = '';
+
+      if (input.parentElement) {
+        input.parentElement.removeChild(input);
+      }
+    };
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        commitValue(parseInt(input.value, 10));
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        cancelEdit();
+      }
+    });
+
+    input.addEventListener('blur', () => {
+      setTimeout(() => {
+        commitValue(parseInt(input.value, 10));
+      }, 10);
+    });
+
+    input.addEventListener('focus', () => {
+      input.select();
+    });
+
+    // Hide display and show input
+    displayElement.style.display = 'none';
+    displayElement.parentElement.insertBefore(input, displayElement);
+    input.focus();
+  });
 }
 
 /**
