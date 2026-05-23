@@ -87,7 +87,7 @@ export function createApp(initialState = {}) {
 
     // Create and add axis indicator
     axisIndicatorGroup = createAxisIndicator(0.5);
-    axisIndicatorGroup.position.set(-1.5, -1.5, 0);
+    axisIndicatorGroup.position.set(0, 0, 0);
     addAxisIndicator(scene, axisIndicatorGroup);
 
     // Set up animation loop

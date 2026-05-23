@@ -148,9 +148,15 @@ export function getControls() {
 
 /**
  * Get the current camera quaternion for sync purposes
+ * Uses the OrbitControls internal object for accurate rotation state
  * @returns {THREE.Quaternion|null} Current camera quaternion
  */
 export function getQuaternion() {
+  if (controlsInstance) {
+    // Get the actual camera object inside OrbitControls
+    // This has the correct quaternion after damping
+    return controlsInstance.getObject().quaternion.clone();
+  }
   if (cameraInstance) {
     return cameraInstance.quaternion.clone();
   }
