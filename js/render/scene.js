@@ -138,21 +138,28 @@ export function getScene() {
 export function createAxisIndicator(size = 1, freeAxes = ['x', 'y', 'z']) {
   const group = new THREE.Group();
 
-  // Create arrow for each axis that is in free mode
+  // Create arrow for each axis that is in free mode (camera axes)
+  // Per PRD F-108: 显示相机轴（非锁定的轴），数量动态显示
+  // 当锁定=0时显示XYZW四轴，锁定=1时显示XYZ三轴
   const axisConfigs = [
     { name: 'x', direction: new THREE.Vector3(1, 0, 0) },
     { name: 'y', direction: new THREE.Vector3(0, 1, 0) },
-    { name: 'z', direction: new THREE.Vector3(0, 0, 1) }
+    { name: 'z', direction: new THREE.Vector3(0, 0, 1) },
+    // W axis: perpendicular to XYZ, shown as a smaller indicator
+    // Represents the 4th dimension in the visualization
+    { name: 'w', direction: new THREE.Vector3(-0.5, -0.5, -0.5), isW: true }
   ];
 
-  // Filter to only free axes
+  // Filter to only free (camera) axes
   const visibleAxes = axisConfigs.filter(axis => freeAxes.includes(axis.name));
 
-  visibleAxes.forEach(({ name, direction }) => {
+  visibleAxes.forEach(({ name, direction, isW }) => {
+    const axisSize = isW ? size * 0.6 : size; // W appears smaller as it's conceptual
+
     // Create line geometry
     const points = [
       new THREE.Vector3(0, 0, 0),
-      direction.clone().multiplyScalar(size)
+      direction.clone().normalize().multiplyScalar(axisSize)
     ];
     const geometry = new THREE.BufferGeometry().setFromPoints(points);
     const material = new THREE.LineBasicMaterial({ linewidth: 2 });
@@ -160,8 +167,8 @@ export function createAxisIndicator(size = 1, freeAxes = ['x', 'y', 'z']) {
     const line = new THREE.Line(geometry, material);
     group.add(line);
 
-    // Create arrow head
-    const arrowLength = size * 0.15;
+    // Create arrow head (smaller for W axis)
+    const arrowLength = axisSize * 0.15;
     const arrowWidth = arrowLength * 0.5;
     const arrowGeom = new THREE.ConeGeometry(arrowWidth, arrowLength, 8);
     const arrowMaterial = new THREE.MeshBasicMaterial();
@@ -169,13 +176,16 @@ export function createAxisIndicator(size = 1, freeAxes = ['x', 'y', 'z']) {
     const arrowMesh = new THREE.Mesh(arrowGeom, arrowMaterial);
 
     // Position arrow at the end of the line
-    arrowMesh.position.copy(direction.clone().multiplyScalar(size - arrowLength * 0.5));
+    arrowMesh.position.copy(direction.clone().normalize().multiplyScalar(axisSize - arrowLength * 0.5));
 
     // Orient arrow to point along the axis direction
     if (name === 'x') {
       arrowMesh.rotation.z = -Math.PI / 2;
     } else if (name === 'z') {
       arrowMesh.rotation.x = Math.PI / 2;
+    } else if (name === 'w') {
+      // W points diagonally - orient appropriately
+      arrowMesh.rotation.set(Math.PI / 4, Math.PI / 4, 0);
     }
     // 'y' default orientation is already pointing up
 
@@ -195,7 +205,7 @@ export function createAxisIndicator(size = 1, freeAxes = ['x', 'y', 'z']) {
     const texture = new THREE.CanvasTexture(canvas);
     const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
     const sprite = new THREE.Sprite(spriteMaterial);
-    sprite.position.copy(direction.clone().multiplyScalar(size * 1.2));
+    sprite.position.copy(direction.clone().normalize().multiplyScalar(axisSize * 1.2));
     sprite.scale.set(0.2, 0.2, 0.2);
     group.add(sprite);
   });

@@ -409,6 +409,7 @@ function updateSliceFromQuadrantState() {
 /**
  * Update the axis indicator DOM display
  * Shows which axes are currently free (displayed in view) as text labels
+ * Per PRD F-108: shows camera axes (non-locked), with locked axes noted in brackets
  */
 function updateAxisIndicatorDOM() {
   const indicator = document.getElementById('axis-indicator');
@@ -416,13 +417,9 @@ function updateAxisIndicatorDOM() {
 
   // Get camera axes (non-locked, displayed axes) and locked axes
   const cameraAxesList = getCameraAxes(quadrantState);
-
   const lockedAxes = quadrantState.lockedAxes || [];
-  const sliceAxes = Object.entries(quadrantState.axes)
-    .filter(([_, a]) => a.mode === 'slice')
-    .map(([axis, _]) => axis.toUpperCase());
 
-  // Create indicator text - show camera axes as the main view
+  // Create indicator text - show camera axes as the main view per F-108
   const label = cameraAxesList.map(a => a.toUpperCase()).join('') || '—';
   if (lockedAxes.length > 0) {
     indicator.querySelector('.axis-indicator__label').textContent = label + ' [' + lockedAxes.map(a => a.toUpperCase()).join(',') + ']';
