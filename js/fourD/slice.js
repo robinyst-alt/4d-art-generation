@@ -107,7 +107,7 @@ export function toThreePoints(sliceData, resolution, dimensions = 3) {
 
   return {
     positions: new Float32Array(positions),
-    colors: new Float32Array(colors)
+    colors: new Float32Array(colors) // RGB, not RGBA
   };
 }
 
@@ -129,7 +129,6 @@ function processPoint(sliceData, index, x, y, z, resolution, positions, colors) 
   colors.push(
     sliceData[index],
     sliceData[index + 1],
-    sliceData[index + 2],
-    sliceData[index + 3]
+    sliceData[index + 2]
   );
 }

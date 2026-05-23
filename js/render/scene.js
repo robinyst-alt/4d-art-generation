@@ -63,7 +63,7 @@ export function updateGeometry(points, data) {
 
   if (data.colors) {
     points.geometry.setAttribute('color',
-      new THREE.BufferAttribute(data.colors, 4));
+      new THREE.BufferAttribute(data.colors, 3));
   }
 
   points.geometry.attributes.position.needsUpdate = true;

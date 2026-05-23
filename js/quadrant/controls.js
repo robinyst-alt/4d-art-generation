@@ -34,6 +34,120 @@ export function createQuadrantControls(container) {
 }
 
 /**
+ * Create an editable input element for direct value input
+ * @param {number} currentValue - Current value to display
+ * @param {string} axis - Axis name
+ * @param {Function} onCommit - Callback when value is committed
+ * @param {Function} onCancel - Callback when editing is cancelled
+ * @returns {HTMLInputElement} Input element
+ */
+function createEditableInput(currentValue, axis, onCommit, onCancel) {
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.className = 'value-input';
+  input.value = currentValue;
+  input.min = 0;
+  input.max = 23;
+  input.step = 1;
+
+  // Handle Enter key - commit value
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const newValue = parseInt(input.value, 10);
+      if (!isNaN(newValue) && newValue >= 0 && newValue <= 23) {
+        onCommit(newValue);
+      } else {
+        onCancel();
+      }
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      onCancel();
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      const newValue = parseInt(input.value, 10);
+      if (!isNaN(newValue) && newValue >= 0 && newValue <= 23) {
+        onCommit(newValue);
+      }
+      // Move to next axis
+      const nextAxis = AXES[(AXES.indexOf(axis) + (e.shiftKey ? -1 : 1) + AXES.length) % AXES.length];
+      const nextDisplay = document.querySelector(`.axis-control[data-axis="${nextAxis}"] .value-display`);
+      if (nextDisplay) {
+        nextDisplay.click();
+      }
+    }
+  });
+
+  // Handle blur - commit value
+  input.addEventListener('blur', () => {
+    const newValue = parseInt(input.value, 10);
+    if (!isNaN(newValue) && newValue >= 0 && newValue <= 23) {
+      onCommit(newValue);
+    } else {
+      onCancel();
+    }
+  });
+
+  // Select all text on focus
+  input.addEventListener('focus', () => {
+    input.select();
+  });
+
+  return input;
+}
+
+/**
+ * Make a value display editable via click
+ * @param {HTMLElement} displayElement - The .value-display element
+ * @param {string} axis - Axis name
+ * @param {Object} controls - Controls manager object
+ * @param {Function} notifyListeners - Function to notify listeners
+ */
+function makeDisplayEditable(displayElement, axis, controls, notifyListeners) {
+  displayElement.style.cursor = 'pointer';
+  displayElement.title = 'Click to edit value (0-23)';
+
+  displayElement.addEventListener('click', () => {
+    // Don't trigger if already editing
+    if (displayElement.querySelector('.value-input')) {
+      return;
+    }
+
+    const currentValue = controls.axes[axis].sliceValue;
+
+    // Create input and replace display content
+    const input = createEditableInput(
+      currentValue,
+      axis,
+      (newValue) => {
+        // Commit the new value
+        controls.axes[axis].sliceValue = newValue;
+        displayElement.textContent = newValue;
+        displayElement.style.display = '';
+
+        // Update slider
+        const slider = displayElement.parentElement.querySelector('.slice-slider');
+        if (slider) {
+          slider.value = newValue;
+        }
+
+        notifyListeners(controls, axis, 'value', newValue);
+      },
+      () => {
+        // Cancel - restore display
+        displayElement.textContent = currentValue;
+        displayElement.style.display = '';
+      }
+    );
+
+    // Hide display and show input
+    displayElement.style.display = 'none';
+    displayElement.parentElement.insertBefore(input, displayElement);
+    input.focus();
+  });
+}
+
+/**
  * Bind event listeners for all axis controls
  * @param {HTMLElement} container - Container element
  * @param {Object} controls - Controls manager object
@@ -45,9 +159,13 @@ function bindAxisEvents(container, controls) {
 
     const modeButton = axisElement.querySelector('.mode-toggle');
     const slider = axisElement.querySelector('.slice-slider');
+    const valueDisplay = axisElement.querySelector('.value-display');
 
     // Skip if required elements are missing
-    if (!modeButton || !slider) return;
+    if (!modeButton || !slider || !valueDisplay) return;
+
+    // Make value display editable
+    makeDisplayEditable(valueDisplay, axis, controls, notifyListeners);
 
     // Mode toggle click
     modeButton.addEventListener('click', () => {
@@ -71,7 +189,6 @@ function bindAxisEvents(container, controls) {
       controls.axes[axis].sliceValue = value;
 
       // Update value display
-      const valueDisplay = axisElement.querySelector('.value-display');
       if (valueDisplay) {
         valueDisplay.textContent = value;
       }

@@ -20,21 +20,34 @@ export function createRenderer(canvas = null) {
 
   const options = {
     antialias: true,
-    alpha: true,
+    alpha: false,
     preserveDrawingBuffer: true,
     powerPreference: 'high-performance'
   };
 
   rendererInstance = new THREE.WebGLRenderer(canvas ? { canvas, ...options } : options);
   rendererInstance.setPixelRatio(pixelRatio);
-  rendererInstance.setSize(800, 600);
-  rendererInstance.setClearColor(0x0a0a0f, 0);
+
+  // Get container for proper sizing
+  const container = document.getElementById('canvas-container');
+  const width = container?.clientWidth || window.innerWidth || 800;
+  const height = container?.clientHeight || window.innerHeight || 600;
+  rendererInstance.setSize(width, height);
+  rendererInstance.setClearColor(0x0a0a0f, 1);
 
   // If no canvas provided, append the auto-created canvas to the container
   if (!canvas && rendererInstance.domElement) {
-    const container = document.getElementById('canvas-container');
+    // Ensure canvas has proper styling
+    rendererInstance.domElement.style.position = 'absolute';
+    rendererInstance.domElement.style.top = '0';
+    rendererInstance.domElement.style.left = '0';
+    rendererInstance.domElement.style.width = '100%';
+    rendererInstance.domElement.style.height = '100%';
+    rendererInstance.domElement.style.zIndex = '0';
+
     if (container) {
-      container.appendChild(rendererInstance.domElement);
+      // Insert canvas at the beginning so axis indicator overlays it
+      container.insertBefore(rendererInstance.domElement, container.firstChild);
     }
   }
 

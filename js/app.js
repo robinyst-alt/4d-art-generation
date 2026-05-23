@@ -179,7 +179,7 @@ export function createApp(initialState = {}) {
       geometry.setAttribute('position', new THREE.BufferAttribute(pointsData.positions, 3));
 
       if (pointsData.colors && pointsData.colors.length > 0) {
-        geometry.setAttribute('color', new THREE.BufferAttribute(pointsData.colors, 4));
+        geometry.setAttribute('color', new THREE.BufferAttribute(pointsData.colors, 3));
       }
 
       const state = stateContainer.getState();
@@ -220,7 +220,7 @@ export function createApp(initialState = {}) {
     geometry.setAttribute('position', new THREE.BufferAttribute(pointsData.positions, 3));
 
     if (pointsData.colors && pointsData.colors.length > 0) {
-      geometry.setAttribute('color', new THREE.BufferAttribute(pointsData.colors, 4));
+      geometry.setAttribute('color', new THREE.BufferAttribute(pointsData.colors, 3));
     }
 
     // Create material
