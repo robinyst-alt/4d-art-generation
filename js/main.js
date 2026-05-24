@@ -444,6 +444,9 @@ function setupQuadrantControls() {
     updateAxisDisplay(quadrantControls, axis, { mode, locked: isLocked });
   });
 
+  // Initialize the slice and axis indicator with the default state
+  updateSliceFromQuadrantState();
+
   // Listen for axis changes and update state
   ['x', 'y', 'z', 'w'].forEach(axis => {
     // Mode toggle
