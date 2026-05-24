@@ -569,13 +569,17 @@ function setupControls() {
       const newShape = e.target.value;
       appInstance.update({ currentShape: newShape });
 
-      // Reset quadrant controls to default state
-      if (quadrantControls) {
+      // Reset quadrant state and UI to default state
+      if (quadrantControls && quadrantState) {
+        quadrantState = createQuadrantState();
+
         ['x', 'y', 'z', 'w'].forEach(axis => {
-          const defaultMode = axis === 'w' ? 'slice' : 'free';
-          const defaultValue = axis === 'w' ? 12 : 12;
-          updateAxisDisplay(quadrantControls, axis, { mode: defaultMode, sliceValue: defaultValue });
+          const isLocked = quadrantState.lockedAxes.includes(axis);
+          const mode = quadrantState.axes[axis].mode;
+          updateAxisDisplay(quadrantControls, axis, { mode, locked: isLocked });
         });
+
+        updateSliceFromQuadrantState();
       }
     });
   }
