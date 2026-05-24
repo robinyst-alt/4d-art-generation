@@ -206,7 +206,7 @@ export function createAxisIndicator(size = 1, freeAxes = ['x', 'y', 'z']) {
   freeAxes.forEach(axisName => {
     const seatIndex = createAxisIndicator.seatAssignments[axisName];
     const direction = seatIndex !== undefined ? SEATS[seatIndex].clone() : new THREE.Vector3(1, 0, 0);
-    const axisSize = size * 0.8;
+    const axisSize = size * 0.7;
 
     // Line from origin to direction
     const lineEnd = direction.clone().normalize().multiplyScalar(axisSize);
