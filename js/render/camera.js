@@ -21,7 +21,7 @@ export function createCamera() {
     0.1,
     1000
   );
-  cameraInstance.position.set(0, 0, 3);
+  cameraInstance.position.set(0, 0, 2);
   return cameraInstance;
 }
 

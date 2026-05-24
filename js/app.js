@@ -82,7 +82,7 @@ export function createApp(initialState = {}) {
     resizeToFit(renderer, container);
 
     // Set camera position
-    setPosition(camera, 0, 0, 3);
+    setPosition(camera, 0, 0, 2);
     setFOV(camera, 60);
     lookAt(camera, 0, 0, 0);
 
@@ -96,7 +96,7 @@ export function createApp(initialState = {}) {
     // Set up axis indicator mini scene with transparent background
     axisScene = createScene(null); // null = no background (transparent)
     axisCamera = createCamera();
-    setPosition(axisCamera, 0, 0, 3);
+    setPosition(axisCamera, 0, 0, 2);
     setFOV(axisCamera, 50);
     lookAt(axisCamera, 0, 0, 0);
     // Set aspect ratio to match the square canvas
