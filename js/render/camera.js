@@ -16,7 +16,7 @@ let controlsInstance = null;
  */
 export function createCamera() {
   cameraInstance = new THREE.PerspectiveCamera(
-    50,
+    60,  // Wider FOV to ensure shape stays in view during rotation
     800 / 600,
     0.1,
     1000
@@ -77,6 +77,12 @@ export function enableControls(camera, domElement) {
   controlsInstance.enableRotate = true;
   controlsInstance.enablePan = false;
   controlsInstance.target.set(0, 0, 0);
+
+  // Constrain camera distance to keep shape always in view
+  // minDistance: prevents camera from going inside the shape
+  // maxDistance: prevents camera from going too far (shape becomes too small)
+  controlsInstance.minDistance = 2;
+  controlsInstance.maxDistance = 20;
 
   return controlsInstance;
 }

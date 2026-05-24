@@ -82,7 +82,7 @@ export function createApp(initialState = {}) {
 
     // Set camera position
     setPosition(camera, 0, 0, 5);
-    setFOV(camera, 50);
+    setFOV(camera, 60);
     lookAt(camera, 0, 0, 0);
 
     // Enable camera controls
@@ -219,7 +219,7 @@ export function createApp(initialState = {}) {
 
       const state = stateContainer.getState();
       const material = new THREE.PointsMaterial({
-        size: 0.15,
+        size: 0.25,
         vertexColors: true,
         transparent: true,
         opacity: 1.0,
