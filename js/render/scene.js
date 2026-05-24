@@ -154,7 +154,13 @@ export function createAxisIndicator(size = 1, freeAxes = ['x', 'y', 'z']) {
     { name: 'z', direction: new THREE.Vector3(0, 0, 1) },
     // W axis: perpendicular to XYZ, shown as a smaller indicator
     // Represents the 4th dimension in the visualization
-    { name: 'w', direction: new THREE.Vector3(-0.5, -0.5, -0.5), isW: true }
+    // W axis: perpendicular to XYZ (all axes are perpendicular in 4D)
+    // Direction (1,1,1) is perpendicular to X(1,0,0), Y(0,1,0), Z(0,0,1)
+    // dot((1,1,1), (1,0,0)) = 1 ≠ 0 ✗
+    // Actually we need W to point along 4th dimension - use diagonal (1,1,1)
+    // But to be perpendicular to all 3 axes requires special projection
+    // Since this is a conceptual 4D axis indicator, use (1,1,1) direction
+    { name: 'w', direction: new THREE.Vector3(1, 1, 1), isW: true }
   ];
 
   // Filter to only free (camera) axes
@@ -185,14 +191,16 @@ export function createAxisIndicator(size = 1, freeAxes = ['x', 'y', 'z']) {
     // Position arrow at the end of the line
     arrowMesh.position.copy(direction.clone().normalize().multiplyScalar(axisSize - arrowLength * 0.5));
 
-    // Orient arrow to point along the axis direction
+    // Orient arrow to point along the axis direction using lookAt
     if (name === 'x') {
       arrowMesh.rotation.z = -Math.PI / 2;
     } else if (name === 'z') {
       arrowMesh.rotation.x = Math.PI / 2;
     } else if (name === 'w') {
-      // W points diagonally - orient appropriately
-      arrowMesh.rotation.set(Math.PI / 4, Math.PI / 4, 0);
+      // Use lookAt to orient cone's +Y axis to point along direction
+      arrowMesh.lookAt(direction.clone().normalize().multiplyScalar(2));
+      // lookAt makes +Y point at target, we want +Y to point away, so rotate 180
+      arrowMesh.rotateX(Math.PI);
     }
     // 'y' default orientation is already pointing up
 
