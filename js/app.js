@@ -221,7 +221,7 @@ export function createApp(initialState = {}) {
       // Keep point size constant regardless of spacing
       // so apparent size stays the same as points spread out
       const material = new THREE.PointsMaterial({
-        size: 0.8,
+        size: 0.2,
         vertexColors: true,
         transparent: true,
         opacity: 1.0,
