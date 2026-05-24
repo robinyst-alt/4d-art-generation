@@ -73,9 +73,15 @@ export function extractMultipleSlices(matrix, resolution, wRange) {
  * @param {Float32Array} sliceData - Slice data of any dimension
  * @param {number} resolution - Resolution of the original matrix
  * @param {number} dimensions - Number of dimensions in slice data (1, 2, or 3)
+ * @param {string[]} freeAxes - Array of free axis names in order (e.g., ['x', 'y'] for 2D)
+ *   The order determines how loop indices map to axes:
+ *   - For 2D: i maps to freeAxes[0], j maps to freeAxes[1]
+ *   - For 1D: i maps to freeAxes[0]
+ * @param {Object} sliceValues - Object mapping slice axis names to their fixed values
+ *   e.g., { y: 12, w: 8 } means y is fixed at 12, w is fixed at 8
  * @returns {Object} Object with positions and colors Float32Arrays
  */
-export function toThreePoints(sliceData, resolution, dimensions = 3) {
+export function toThreePoints(sliceData, resolution, dimensions = 3, freeAxes = null, sliceValues = null) {
   const positions = [];
   const colors = [];
 
@@ -90,18 +96,50 @@ export function toThreePoints(sliceData, resolution, dimensions = 3) {
       }
     }
   } else if (dimensions === 2) {
-    // 2D slice: [y][x][rgba] (flattened)
-    for (let y = 0; y < resolution; y++) {
-      for (let x = 0; x < resolution; x++) {
-        const index = (y * resolution + x) * 4;
-        processPoint(sliceData, index, x, y, 0, resolution, positions, colors);
+    // 2D slice with explicit axis order from freeAxes
+    // Data layout: outer loop index i → freeAxes[0], inner loop index j → freeAxes[1]
+    // Example: freeAxes=['x', 'z'] means i→x, j→z, data layout is x×z
+    for (let i = 0; i < resolution; i++) {
+      for (let j = 0; j < resolution; j++) {
+        const index = (i * resolution + j) * 4;
+        // Map i and j to actual axes based on freeAxes order
+        const axis0 = freeAxes && freeAxes[0] ? freeAxes[0] : 'x';
+        const axis1 = freeAxes && freeAxes[1] ? freeAxes[1] : 'y';
+
+        // Start with slice values if available, otherwise default to 0
+        let x = sliceValues && sliceValues.x !== undefined ? sliceValues.x : 0;
+        let y = sliceValues && sliceValues.y !== undefined ? sliceValues.y : 0;
+        let z = sliceValues && sliceValues.z !== undefined ? sliceValues.z : 0;
+
+        // Override with loop indices for free axes
+        if (axis0 === 'x') { x = i; }
+        else if (axis0 === 'y') { y = i; }
+        else if (axis0 === 'z') { z = i; }
+
+        if (axis1 === 'x') { x = j; }
+        else if (axis1 === 'y') { y = j; }
+        else if (axis1 === 'z') { z = j; }
+
+        processPoint(sliceData, index, x, y, z, resolution, positions, colors);
       }
     }
   } else if (dimensions === 1) {
-    // 1D slice: [x][rgba] (flattened)
-    for (let x = 0; x < resolution; x++) {
-      const index = x * 4;
-      processPoint(sliceData, index, x, 0, 0, resolution, positions, colors);
+    // 1D slice: freeAxes[0] is the free axis
+    for (let i = 0; i < resolution; i++) {
+      const index = i * 4;
+      const axis = freeAxes && freeAxes[0] ? freeAxes[0] : 'x';
+
+      // Start with slice values if available, otherwise default to 0
+      let x = sliceValues && sliceValues.x !== undefined ? sliceValues.x : 0;
+      let y = sliceValues && sliceValues.y !== undefined ? sliceValues.y : 0;
+      let z = sliceValues && sliceValues.z !== undefined ? sliceValues.z : 0;
+
+      // Override with loop index for the free axis
+      if (axis === 'x') { x = i; }
+      else if (axis === 'y') { y = i; }
+      else if (axis === 'z') { z = i; }
+
+      processPoint(sliceData, index, x, y, z, resolution, positions, colors);
     }
   }
 

@@ -354,16 +354,16 @@ function extract2DSlice(matrix, resolution, sliceAxes, sliceValues, dimensions) 
   const freeAxes = axes.filter(axis => !sliceAxes.includes(axis));
 
   // Create a map from slice axes to their fixed values
-  const fixedValues = {};
+  const sliceValuesMap = {};
   sliceAxes.forEach(axis => {
-    fixedValues[axis] = sliceValues[axis];
+    sliceValuesMap[axis] = sliceValues[axis];
   });
 
   // Iterate over the two free dimensions
   for (let i = 0; i < resolution; i++) {
     for (let j = 0; j < resolution; j++) {
       // Map indices to axes
-      const axisIndices = { ...fixedValues };
+      const axisIndices = { ...sliceValuesMap };
       axisIndices[freeAxes[0]] = i;
       axisIndices[freeAxes[1]] = j;
 
@@ -380,7 +380,7 @@ function extract2DSlice(matrix, resolution, sliceAxes, sliceValues, dimensions) 
     }
   }
 
-  return { data: sliceData, dimensions, sliceAxes, freeAxes };
+  return { data: sliceData, dimensions, sliceAxes, freeAxes, sliceValues: sliceValuesMap };
 }
 
 /**
@@ -394,14 +394,14 @@ function extract1DSlice(matrix, resolution, sliceAxes, sliceValues, dimensions) 
   const freeAxes = axes.filter(axis => !sliceAxes.includes(axis));
 
   // Create a map from slice axes to their fixed values
-  const fixedValues = {};
+  const sliceValuesMap1D = {};
   sliceAxes.forEach(axis => {
-    fixedValues[axis] = sliceValues[axis];
+    sliceValuesMap1D[axis] = sliceValues[axis];
   });
 
   // Iterate over the single free dimension
   for (let i = 0; i < resolution; i++) {
-    const axisIndices = { ...fixedValues };
+    const axisIndices = { ...sliceValuesMap1D };
     axisIndices[freeAxes[0]] = i;
 
     const srcIndex = (axisIndices.w * resolution * resolution * resolution +
@@ -416,5 +416,5 @@ function extract1DSlice(matrix, resolution, sliceAxes, sliceValues, dimensions) 
     sliceData[dstIndex + 3] = matrix[srcIndex + 3];
   }
 
-  return { data: sliceData, dimensions, sliceAxes, freeAxes };
+  return { data: sliceData, dimensions, sliceAxes, freeAxes, sliceValues: sliceValuesMap1D };
 }

@@ -204,7 +204,7 @@ export function createApp(initialState = {}) {
     }
 
     const extracted = extractMultiAxisSlice(matrix, quadrantState);
-    const pointsData = toThreePoints(extracted.data, resolution, extracted.dimensions);
+    const pointsData = toThreePoints(extracted.data, resolution, extracted.dimensions, extracted.freeAxes, extracted.sliceValues);
 
     // Apply point spacing multiplier (Level 1=1x, Level 2=2x, etc.)
     const spacingMultiplier = stateContainer.getState().pointSpacing || 1;
