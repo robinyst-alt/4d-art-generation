@@ -166,6 +166,9 @@ async function onDOMContentLoaded() {
 
   // Set up axis indicator draggable position
   setupAxisIndicatorDraggable();
+
+  // Set up axis indicator internal drag (axes within canvas)
+  setupAxisIndicatorInternalDrag();
 }
 
 /**
@@ -282,6 +285,52 @@ function setupAxisIndicatorDraggable() {
     const rect = axisIndicator.getBoundingClientRect();
     startLeft = rect.left;
     startTop = rect.top;
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  });
+}
+
+/**
+ * Set up internal drag for axis indicator axes
+ */
+function setupAxisIndicatorInternalDrag() {
+  const axisIndicator = document.getElementById('axis-indicator');
+  const canvas = axisIndicator?.querySelector('.axis-indicator__canvas');
+
+  if (!canvas) return;
+
+  let isDragging = false;
+  let lastX = 0;
+  let lastY = 0;
+
+  const onMouseMove = (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+
+    // Calculate delta in canvas space (normalized)
+    const dx = (e.clientX - lastX) * 0.1;
+    const dy = (e.clientY - lastY) * 0.1;
+
+    if (appInstance && appInstance.dragAxisIndicator) {
+      appInstance.dragAxisIndicator(-dx, dy); // Invert Y since canvas Y is inverted
+    }
+
+    lastX = e.clientX;
+    lastY = e.clientY;
+  };
+
+  const onMouseUp = () => {
+    isDragging = false;
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+  };
+
+  canvas.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    isDragging = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
   });

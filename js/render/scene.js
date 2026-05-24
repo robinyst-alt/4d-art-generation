@@ -162,24 +162,30 @@ export function createAxisIndicator(size = 1, freeAxes = ['x', 'y', 'z']) {
 
   visibleAxes.forEach(({ name, direction, isW }) => {
     const axisSize = isW ? size * 0.6 : size; // W appears smaller as it's conceptual
+    const lineWidth = isW ? size * 0.08 : size * 0.1; // Line thickness relative to size
 
-    // Create line geometry
+    // Create line geometry (use tube/cylinder for proper thickness scaling)
     const points = [
       new THREE.Vector3(0, 0, 0),
       direction.clone().normalize().multiplyScalar(axisSize)
     ];
-    const geometry = new THREE.BufferGeometry().setFromPoints(points);
-    const material = new THREE.LineBasicMaterial({ linewidth: 2 });
-    material.color.setRGB(0.8, 0.8, 0.8); // Grayscale per PRD
-    const line = new THREE.Line(geometry, material);
+    const lineGeometry = new THREE.TubeGeometry(
+      new THREE.LineCurve3(points[0], points[1]),
+      8, // tubular segments
+      lineWidth, // radius for tube (thickness)
+      8, // radial segments
+      false
+    );
+    const lineMaterial = new THREE.MeshBasicMaterial({ color: 0xcccccc });
+    const line = new THREE.Mesh(lineGeometry, lineMaterial);
     group.add(line);
 
     // Create arrow head (smaller for W axis)
     const arrowLength = axisSize * 0.15;
-    const arrowWidth = arrowLength * 0.5;
+    const arrowWidth = axisSize * 0.08;
     const arrowGeom = new THREE.ConeGeometry(arrowWidth, arrowLength, 8);
     const arrowMaterial = new THREE.MeshBasicMaterial();
-    arrowMaterial.color.setRGB(0.8, 0.8, 0.8); // Grayscale per PRD
+    arrowMaterial.color.setHex(0xcccccc);
     const arrowMesh = new THREE.Mesh(arrowGeom, arrowMaterial);
 
     // Position arrow at the end of the line
@@ -204,7 +210,7 @@ export function createAxisIndicator(size = 1, freeAxes = ['x', 'y', 'z']) {
     canvas.height = 64;
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = '#cccccc';
-    ctx.font = 'bold 40px Arial';
+    ctx.font = `bold ${Math.round(40 * (size / 1.5))}px Arial`; // Scale font with size
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(name.toUpperCase(), 32, 32);
@@ -213,7 +219,9 @@ export function createAxisIndicator(size = 1, freeAxes = ['x', 'y', 'z']) {
     const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
     const sprite = new THREE.Sprite(spriteMaterial);
     sprite.position.copy(direction.clone().normalize().multiplyScalar(axisSize * 1.2));
-    sprite.scale.set(0.2, 0.2, 0.2);
+    // Scale sprite text with size (base size 0.2 at size 1.5)
+    const textScale = 0.2 * (size / 1.5);
+    sprite.scale.set(textScale, textScale, textScale);
     group.add(sprite);
   });
 

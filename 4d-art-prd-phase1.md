@@ -268,6 +268,16 @@
    - 坐标轴旋转方向与相机视角同步
    - 使用四元数共轭（inverse）确保上下旋转方向正确
 
+7. **框内坐标轴位置拖动**
+   - 鼠标点击坐标轴指示器框内（canvas区域）
+   - 拖动可以调整坐标轴在框内的位置
+   - 位置偏移限制在 ±30 范围
+
+8. **缩放时元素同步变粗**
+   - 滚轮缩放时，线条使用 TubeGeometry 实现真实粗细
+   - 箭头、线宽随 scale 同步缩放
+   - 文字大小随 scale 同步缩放
+
 **实现文件**：
 - `js/render/scene.js` - `createAxisIndicator()`, `addAxisIndicator()`
 - `js/render/camera.js` - `getQuaternion()`

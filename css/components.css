@@ -93,7 +93,10 @@
   letter-spacing: 0.05em;
 }
 
-.axis-indicator--collapsed .axis-indicator__content {
+.axis-indicator--collapsed .axis-indicator__content,
+.axis-indicator--collapsed .axis-indicator__canvas,
+.axis-indicator--collapsed .axis-indicator__label,
+.axis-indicator--collapsed .axis-indicator__resize-handle {
   display: none;
 }
 
