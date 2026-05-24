@@ -235,9 +235,35 @@
 - `axisIndicatorVisible`: boolean — 是否显示坐标轴指示器
 - 默认值: true（展开）
 
+**新增功能（F-108 扩展）**：
+
+1. **可折叠显示**
+   - 点击 `[−]` 按钮隐藏整个坐标轴指示器框
+   - 点击 `[+]` 按钮显示坐标轴指示器框
+   - aria-expanded 状态同步
+
+2. **可调整大小**
+   - 右下角有拖拽手柄（se-resize 光标）
+   - 拖动可改变窗口大小（保持正方形）
+   - 最小尺寸 80px，最大不限制
+
+3. **鼠标滚轮缩放**
+   - 鼠标悬停在坐标轴指示器区域时
+   - 滚动鼠标滚轮可放大或缩小坐标轴
+   - 缩放范围: 0.3x ~ 5x
+   - 每次滚动步长: 0.1x
+
+4. **视觉样式更新**
+   - 背景色: 黑色 (#000000)
+   - 文字颜色: 白色 (#ffffff)
+   - 边框: 深灰色 (#333333)
+   - 折叠按钮、标签文字均为白色
+
 **实现文件**：
 - `js/render/scene.js` - `createAxisIndicator()`, `addAxisIndicator()`
 - `js/render/camera.js` - `getQuaternion()`
+- `js/app.js` - `resizeAxisCanvas()`, `zoomAxisIndicator()`, `getAxisScale()`
+- `js/main.js` - `setupAxisIndicatorResize()`, `setupAxisIndicatorZoom()`
 - `css/components.css` - `.axis-indicator` 样式
 - `index.html` - 坐标指示器容器
 

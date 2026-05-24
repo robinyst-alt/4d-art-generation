@@ -61,6 +61,7 @@ export function createApp(initialState = {}) {
   let axisRenderer = null;
   let axisControls = null;
   let axisIndicatorGroup = null;
+  let axisScale = 1.5; // Initial scale for axis indicator
 
   // Current points mesh
   let currentPoints = null;
@@ -450,9 +451,42 @@ export function createApp(initialState = {}) {
       }
     });
 
-    // Create new axis indicator with updated free axes (same large size)
-    axisIndicatorGroup = createAxisIndicator(1.5, freeAxes);
+    // Create new axis indicator with updated free axes (same scale)
+    axisIndicatorGroup = createAxisIndicator(axisScale, freeAxes);
     addAxisIndicator(axisScene, axisIndicatorGroup);
+  }
+
+  /**
+   * Resize the axis indicator canvas
+   * @param {number} size - New size in pixels
+   */
+  function resizeAxisCanvas(size) {
+    if (axisRenderer) {
+      axisRenderer.setSize(size, size);
+    }
+  }
+
+  /**
+   * Zoom the axis indicator (scale the axis group)
+   * @param {number} delta - Zoom delta (positive = zoom in, negative = zoom out)
+   */
+  function zoomAxisIndicator(delta) {
+    // Update scale factor
+    axisScale = Math.max(0.3, Math.min(5, axisScale + delta));
+    axisScale = Math.round(axisScale * 10) / 10; // Round to 1 decimal
+
+    // Apply scale to the axis indicator group
+    if (axisIndicatorGroup) {
+      axisIndicatorGroup.scale.set(axisScale, axisScale, axisScale);
+    }
+  }
+
+  /**
+   * Get current axis scale
+   * @returns {number} Current axis scale
+   */
+  function getAxisScale() {
+    return axisScale;
   }
 
   /**
@@ -475,6 +509,9 @@ export function createApp(initialState = {}) {
     generate: generateShape,
     updateSlice,
     updateAxisIndicator,
+    resizeAxisCanvas,
+    zoomAxisIndicator,
+    getAxisScale,
     setTheme,
     getState,
     start,

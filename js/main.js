@@ -157,6 +157,12 @@ async function onDOMContentLoaded() {
 
   // Set up axis indicator toggle (collapsible widget)
   setupAxisIndicatorToggle();
+
+  // Set up axis indicator resize handle
+  setupAxisIndicatorResize();
+
+  // Set up axis indicator zoom on wheel
+  setupAxisIndicatorZoom();
 }
 
 /**
@@ -174,6 +180,80 @@ function setupAxisIndicatorToggle() {
       toggleBtn.textContent = isExpanded ? '+' : '−';
     });
   }
+}
+
+/**
+ * Set up axis indicator resize functionality
+ */
+function setupAxisIndicatorResize() {
+  const axisIndicator = document.getElementById('axis-indicator');
+  const resizeHandle = axisIndicator?.querySelector('.axis-indicator__resize-handle');
+  const canvas = axisIndicator?.querySelector('.axis-indicator__canvas');
+
+  if (!resizeHandle || !canvas) return;
+
+  let isResizing = false;
+  let startX, startY, startWidth, startHeight;
+
+  const onMouseMove = (e) => {
+    if (!isResizing) return;
+    e.preventDefault();
+
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+
+    // Calculate new size (keep square, use larger dimension)
+    const newSize = Math.max(80, Math.max(startWidth + dx, startHeight + dy));
+    const newSizeStr = newSize + 'px';
+
+    canvas.style.width = newSizeStr;
+    canvas.style.height = newSizeStr;
+
+    // Update axis indicator renderer size
+    if (appInstance && appInstance.resizeAxisCanvas) {
+      appInstance.resizeAxisCanvas(newSize);
+    }
+  };
+
+  const onMouseUp = () => {
+    isResizing = false;
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+  };
+
+  resizeHandle.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    isResizing = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    startWidth = canvas.offsetWidth;
+    startHeight = canvas.offsetHeight;
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  });
+}
+
+/**
+ * Set up mouse wheel zoom for axis indicator
+ */
+function setupAxisIndicatorZoom() {
+  const axisIndicator = document.getElementById('axis-indicator');
+
+  if (!axisIndicator) return;
+
+  axisIndicator.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Get current scale and calculate new scale
+    const currentScale = appInstance?.getAxisScale() || 1.5;
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+
+    if (appInstance && appInstance.zoomAxisIndicator) {
+      appInstance.zoomAxisIndicator(delta);
+    }
+  }, { passive: false });
 }
 
 /**
@@ -333,7 +413,8 @@ function setupQuadrantControls() {
 
       // Sync UI with validated state (handles constraint blocking)
       const actualMode = quadrantState.axes[axis].mode;
-      updateAxisDisplay(quadrantControls, axis, { mode: actualMode });
+      const actualLocked = quadrantState.lockedAxes.includes(axis);
+      updateAxisDisplay(quadrantControls, axis, { mode: actualMode, locked: actualLocked });
 
       updateSliceFromQuadrantState();
     });

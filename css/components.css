@@ -41,11 +41,13 @@
   left: var(--space-4);
   display: flex;
   flex-direction: column;
-  background-color: var(--color-surface-elevated);
-  border: 1px solid var(--color-surface-overlay);
+  background-color: #000000;
+  border: 1px solid #333333;
   border-radius: var(--radius-md);
   z-index: var(--z-overlay);
   overflow: hidden;
+  min-width: 100px;
+  min-height: 100px;
 }
 
 .axis-indicator__toggle {
@@ -56,7 +58,7 @@
   padding: var(--space-1) var(--space-2);
   background: transparent;
   border: none;
-  color: var(--color-text-secondary);
+  color: #ffffff;
   font-size: var(--text-lg);
   font-weight: var(--font-bold);
   cursor: pointer;
@@ -64,7 +66,7 @@
 }
 
 .axis-indicator__toggle:hover {
-  color: var(--color-text);
+  color: #cccccc;
 }
 
 .axis-indicator__content {
@@ -75,7 +77,7 @@
 
 .axis-indicator__canvas {
   display: block;
-  background-color: var(--color-surface-base);
+  background-color: #000000;
   border-radius: var(--radius-sm);
   width: 120px;
   height: 120px;
@@ -86,13 +88,39 @@
   text-align: center;
   padding: var(--space-1) var(--space-2);
   font-size: var(--text-sm);
-  color: var(--color-text-secondary);
+  color: #ffffff;
   font-family: var(--font-mono);
   letter-spacing: 0.05em;
 }
 
 .axis-indicator--collapsed .axis-indicator__content {
   display: none;
+}
+
+/* Axis Indicator Resize Handle */
+.axis-indicator__resize-handle {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  cursor: se-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.axis-indicator__resize-handle::before {
+  content: '';
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid #555555;
+  border-bottom: 2px solid #555555;
+}
+
+.axis-indicator__resize-handle:hover::before {
+  border-color: #ffffff;
 }
 
 /* ============================================
