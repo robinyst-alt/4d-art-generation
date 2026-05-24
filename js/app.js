@@ -219,11 +219,11 @@ export function createApp(initialState = {}) {
 
       const state = stateContainer.getState();
       const material = new THREE.PointsMaterial({
-        size: 1.5,
+        size: 10,
         vertexColors: true,
         transparent: true,
         opacity: 1.0,
-        sizeAttenuation: true
+        sizeAttenuation: false
       });
 
       currentPoints = new THREE.Points(geometry, material);
