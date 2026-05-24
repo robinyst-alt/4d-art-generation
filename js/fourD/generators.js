@@ -48,6 +48,46 @@ function sdfCube(x, y, z, size) {
 }
 
 /**
+ * 8-color gradient palette: deep gray to white
+ * Inner (core) points = darker, outer points = lighter
+ */
+const GRADIENT_COLORS_8 = [
+  { r: 0.2,  g: 0.2,  b: 0.2  }, // 深灰 - innermost
+  { r: 0.3,  g: 0.3,  b: 0.3  }, // 暗灰
+  { r: 0.4,  g: 0.4,  b: 0.4  }, // 灰
+  { r: 0.5,  g: 0.5,  b: 0.5  }, // 中灰
+  { r: 0.6,  g: 0.6,  b: 0.6  }, // 浅灰
+  { r: 0.75, g: 0.75, b: 0.75 }, // 亮灰
+  { r: 0.88, g: 0.88, b: 0.88 }, // 浅灰白
+  { r: 1.0,  g: 1.0,  b: 1.0  }, // 白色 - outermost
+];
+
+/**
+ * Get gradient color based on normalized distance from center
+ * @param {number} normalizedDist - Distance normalized to [0, 1], where 0 = center, 1 = surface
+ * @returns {{r: number, g: number, b: number}} RGB color values
+ */
+function getGradientColor(normalizedDist) {
+  const clampedDist = Math.max(0, Math.min(1, normalizedDist));
+  const index = Math.floor(clampedDist * (GRADIENT_COLORS_8.length - 1));
+  return GRADIENT_COLORS_8[index];
+}
+
+/**
+ * Calculate 4D distance from center (Euclidean)
+ */
+function distance4D(nx, ny, nz, nw) {
+  return Math.sqrt(nx * nx + ny * ny + nz * nz + nw * nw);
+}
+
+/**
+ * Calculate 3D distance from center (Euclidean)
+ */
+function distance3D(nx, ny, nz) {
+  return Math.sqrt(nx * nx + ny * ny + nz * nz);
+}
+
+/**
  * SDF for an octahedron centered at origin
  */
 function sdfOctahedron(x, y, z, size) {
@@ -123,10 +163,14 @@ export function generateTesseract(resolution, size = 0.9) {
                          y * resolution +
                          x) * 4;
 
-            // Solid shape - all interior points have same brightness
-            data[index] = 1;         // R
-            data[index + 1] = 1;     // G
-            data[index + 2] = 1;     // B
+            // Gradient coloring: inner points darker, outer points lighter
+            // maxComponent ranges [0, halfSize], normalize to [0, 1]
+            const normalizedDist = maxComponent / halfSize;
+            const color = getGradientColor(normalizedDist);
+
+            data[index] = color.r;
+            data[index + 1] = color.g;
+            data[index + 2] = color.b;
             data[index + 3] = 1;     // A
           }
         }
@@ -168,10 +212,15 @@ export function generate4DSphere(resolution, radius = 0.5) {
                          y * resolution +
                          x) * 4;
 
-            // Solid sphere - all interior points same brightness
-            data[index] = 1;     // R
-            data[index + 1] = 1; // G
-            data[index + 2] = 1; // B
+            // Gradient coloring: inner points darker, outer points lighter
+            // dist ranges [0, radius], normalize to [0, 1]
+            const dist = Math.sqrt(distSq);
+            const normalizedDist = dist / radius;
+            const color = getGradientColor(normalizedDist);
+
+            data[index] = color.r;
+            data[index + 1] = color.g;
+            data[index + 2] = color.b;
             data[index + 3] = 1; // A
           }
         }
@@ -212,11 +261,15 @@ export function generate4DOctahedron(resolution) {
                          y * resolution +
                          x) * 4;
 
-            // Solid octahedron - same brightness for all interior points
-            data[index] = 1;       // R
-            data[index + 1] = 1;   // G
-            data[index + 2] = 1;   // B
-            data[index + 3] = 1;   // A
+            // Gradient coloring: inner points darker, outer points lighter
+            // manhattanDist ranges [0, 0.9], normalize to [0, 1]
+            const normalizedDist = manhattanDist / 0.9;
+            const color = getGradientColor(normalizedDist);
+
+            data[index] = color.r;
+            data[index + 1] = color.g;
+            data[index + 2] = color.b;
+            data[index + 3] = 1;
           }
         }
       }
@@ -261,11 +314,18 @@ export function generate4DDodecahedron(resolution) {
                          y * resolution +
                          x) * 4;
 
-            // Solid dodecahedron - same brightness for all interior points
-            data[index] = 1;       // R
-            data[index + 1] = 1;   // G
-            data[index + 2] = 1;   // B
-            data[index + 3] = 1;   // A
+            // Gradient coloring: inner points darker, outer points lighter
+            // Use 3D distance for gradient (normalized to [0, 1])
+            const dist3D = distance3D(nx, ny, nz);
+            // Approximate max radius for normalization (0.9 * sqrt(3) for cube diagonal)
+            const maxDist = 0.9 * 1.5;
+            const normalizedDist = Math.min(1, dist3D / maxDist);
+            const color = getGradientColor(normalizedDist);
+
+            data[index] = color.r;
+            data[index + 1] = color.g;
+            data[index + 2] = color.b;
+            data[index + 3] = 1;
           }
         }
       }
@@ -310,11 +370,18 @@ export function generate4DIcosahedron(resolution) {
                          y * resolution +
                          x) * 4;
 
-            // Solid icosahedron - same brightness for all interior points
-            data[index] = 1;       // R
-            data[index + 1] = 1;   // G
-            data[index + 2] = 1;   // B
-            data[index + 3] = 1;   // A
+            // Gradient coloring: inner points darker, outer points lighter
+            // Use 3D distance for gradient (normalized to [0, 1])
+            const dist3D = distance3D(nx, ny, nz);
+            // Approximate max radius for normalization
+            const maxDist = 1.0 * 1.5;
+            const normalizedDist = Math.min(1, dist3D / maxDist);
+            const color = getGradientColor(normalizedDist);
+
+            data[index] = color.r;
+            data[index + 1] = color.g;
+            data[index + 2] = color.b;
+            data[index + 3] = 1;
           }
         }
       }
@@ -360,11 +427,15 @@ export function generate4DTorus(resolution, majorRadius = 0.4, minorRadius = 0.2
                          y * resolution +
                          x) * 4;
 
-            // Solid torus - same brightness for all interior points
-            data[index] = 1;       // R
-            data[index + 1] = 1;   // G
-            data[index + 2] = 1;   // B
-            data[index + 3] = 1;   // A
+            // Gradient coloring: inner points darker, outer points lighter
+            // distInTube ranges [0, minorRadius], normalize to [0, 1]
+            const normalizedDist = distInTube / minorRadius;
+            const color = getGradientColor(normalizedDist);
+
+            data[index] = color.r;
+            data[index + 1] = color.g;
+            data[index + 2] = color.b;
+            data[index + 3] = 1;
           }
         }
       }
