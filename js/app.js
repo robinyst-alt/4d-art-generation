@@ -218,6 +218,8 @@ export function createApp(initialState = {}) {
       }
 
       const state = stateContainer.getState();
+      // Keep point size constant regardless of spacing
+      // so apparent size stays the same as points spread out
       const material = new THREE.PointsMaterial({
         size: 0.8,
         vertexColors: true,
@@ -260,11 +262,11 @@ export function createApp(initialState = {}) {
 
     // Create material
     const material = new THREE.PointsMaterial({
-      size: 1.5,
+      size: 0.8,
       vertexColors: true,
       transparent: true,
       opacity: 1.0,
-      sizeAttenuation: false
+      sizeAttenuation: true
     });
 
     // Create points and add to scene
