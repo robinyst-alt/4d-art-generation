@@ -13,7 +13,7 @@ import { createState, dispatch, subscribe, ACTIONS } from './ui/state.js';
 import { createScene, addMesh, updateGeometry, clearScene, setSceneLighting, createAxisIndicator, addAxisIndicator } from './render/scene.js';
 import { createCamera, enableControls, setPosition, setFOV, lookAt, updateControls, getQuaternion } from './render/camera.js';
 import { createRenderer, render, setAnimationLoop, startAnimationLoop, stopAnimationLoop, resizeToFit, captureScreenshot, clearRenderer } from './render/renderer.js';
-import { extractSlice, toThreePoints } from './fourD/slice.js';
+import { toThreePoints } from './fourD/slice.js';
 import { generate } from './fourD/generators.js';
 import { extractMultiAxisSlice } from './quadrant/stateManager.js';
 import { generateContentHash } from './utils/hash.js';
@@ -183,8 +183,8 @@ export function createApp(initialState = {}) {
    * Update the displayed slice with new matrix data
    * @param {Float32Array} matrix - 4D matrix data
    * @param {number} resolution - Resolution of the matrix
-   * @param {number} wIndex - W-axis index to display (legacy, kept for compatibility)
-   * @param {Object} quadrantState - Optional quadrant state for multi-axis slicing
+   * @param {number} wIndex - W-axis index (deprecated, unused)
+   * @param {Object} quadrantState - Quadrant state for multi-axis slicing
    * @returns {boolean} Success status
    */
   function updateSlice(matrix, resolution, wIndex, quadrantState = null) {
@@ -233,48 +233,6 @@ export function createApp(initialState = {}) {
 
       return true;
     }
-
-    // Legacy single-slice extraction
-    const sliceData = extractSlice(matrix, resolution, wIndex);
-
-    // Convert to Three.js points format
-    const pointsData = toThreePoints(sliceData, resolution);
-
-    // Apply point spacing multiplier (Level 1=1x, Level 2=2x, etc.)
-    const spacingMultiplier = stateContainer.getState().pointSpacing || 1;
-    for (let i = 0; i < pointsData.positions.length; i++) {
-      pointsData.positions[i] *= spacingMultiplier;
-    }
-
-    // Remove old points if exists
-    if (currentPoints) {
-      clearScene(scene);
-      currentPoints = null;
-    }
-
-    // Create new points geometry
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.BufferAttribute(pointsData.positions, 3));
-
-    if (pointsData.colors && pointsData.colors.length > 0) {
-      geometry.setAttribute('color', new THREE.BufferAttribute(pointsData.colors, 3));
-    }
-
-    // Create material
-    const material = new THREE.PointsMaterial({
-      size: 0.8,
-      vertexColors: true,
-      transparent: true,
-      opacity: 1.0,
-      sizeAttenuation: true
-    });
-
-    // Create points and add to scene
-    currentPoints = new THREE.Points(geometry, material);
-    addMesh(scene, currentPoints);
-
-    return true;
-  }
 
   /**
    * Set the active color theme
