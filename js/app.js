@@ -187,13 +187,22 @@ export function createApp(initialState = {}) {
    * @param {Object} quadrantState - Quadrant state for multi-axis slicing
    * @returns {boolean} Success status
    */
-  function updateSlice(matrix, resolution, wIndex, quadrantState = null) {
+  function updateSlice(matrix, resolution, wIndex, quadrantState) {
     if (!matrix) {
       return false;
     }
 
-    // Use multi-axis slice extraction if quadrant state provided
-    if (quadrantState) {
+    // Handle updateSlice calls without quadrantState (F107 point spacing updates)
+    // These calls need to re-render with current state
+    if (!quadrantState) {
+      // When no quadrantState, get it from state
+      const state = stateContainer.getState();
+      quadrantState = state.quadrantState;
+    }
+
+    if (!quadrantState) {
+      return false;
+    }
       const extracted = extractMultiAxisSlice(matrix, quadrantState);
       const pointsData = toThreePoints(extracted.data, resolution, extracted.dimensions);
 
