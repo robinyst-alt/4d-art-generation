@@ -256,8 +256,21 @@ function setupAxisIndicatorDraggable() {
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
 
-    const newLeft = startLeft + dx;
-    const newTop = startTop + dy;
+    const rect = axisIndicator.getBoundingClientRect();
+    const indicatorWidth = rect.width;
+    const indicatorHeight = rect.height;
+
+    // Get viewport bounds
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // Calculate new position with bounds checking
+    let newLeft = startLeft + dx;
+    let newTop = startTop + dy;
+
+    // Constrain to viewport (don't let it go outside borders)
+    newLeft = Math.max(0, Math.min(newLeft, viewportWidth - indicatorWidth));
+    newTop = Math.max(0, Math.min(newTop, viewportHeight - indicatorHeight));
 
     axisIndicator.style.left = newLeft + 'px';
     axisIndicator.style.top = newTop + 'px';
