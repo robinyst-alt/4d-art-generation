@@ -74,9 +74,10 @@
 
   <!-- Canvas Container -->
   <div id="canvas-container" class="canvas-container theme-canvas" role="img" aria-label="4D shape visualization canvas">
-    <!-- Axis indicator overlay - collapsible 3D coordinate widget -->
+    <!-- Axis indicator overlay - collapsible 2D coordinate widget -->
     <div id="axis-indicator" class="axis-indicator" aria-live="polite">
       <button class="axis-indicator__toggle" aria-label="Toggle axis indicator" aria-expanded="true">−</button>
+      <canvas class="axis-indicator__canvas" width="120" height="120"></canvas>
       <span class="axis-indicator__label">XYZ [W]</span>
     </div>
     <!-- Three.js canvas will be inserted here -->

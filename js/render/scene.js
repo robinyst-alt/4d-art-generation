@@ -12,11 +12,18 @@ let directionalLight = null;
 
 /**
  * Create a new Three.js scene with default lighting
+ * @param {THREE.Color|number|null} [background] - Optional background color
  * @returns {THREE.Scene} Three.js scene instance
  */
-export function createScene() {
+export function createScene(background = null) {
   sceneInstance = new THREE.Scene();
-  sceneInstance.background = new THREE.Color(0x0a0a0f);
+
+  if (background instanceof THREE.Color) {
+    sceneInstance.background = background;
+  } else if (background !== null) {
+    sceneInstance.background = new THREE.Color(background);
+  }
+  // If background is null, scene has no background (transparent)
 
   ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
   sceneInstance.add(ambientLight);

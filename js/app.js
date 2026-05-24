@@ -12,7 +12,7 @@ import * as THREE from 'three';
 import { createState, dispatch, subscribe, ACTIONS } from './ui/state.js';
 import { createScene, addMesh, updateGeometry, clearScene, setSceneLighting, createAxisIndicator, addAxisIndicator } from './render/scene.js';
 import { createCamera, enableControls, setPosition, setFOV, lookAt, updateControls, getQuaternion } from './render/camera.js';
-import { createRenderer, render, setAnimationLoop, startAnimationLoop, stopAnimationLoop, resizeToFit, captureScreenshot } from './render/renderer.js';
+import { createRenderer, render, setAnimationLoop, startAnimationLoop, stopAnimationLoop, resizeToFit, captureScreenshot, clearRenderer } from './render/renderer.js';
 import { extractSlice, toThreePoints } from './fourD/slice.js';
 import { generate } from './fourD/generators.js';
 import { extractMultiAxisSlice } from './quadrant/stateManager.js';
@@ -54,6 +54,12 @@ export function createApp(initialState = {}) {
   let camera = null;
   let renderer = null;
   let controls = null;
+
+  // Axis indicator components (separate mini scene)
+  let axisScene = null;
+  let axisCamera = null;
+  let axisRenderer = null;
+  let axisControls = null;
   let axisIndicatorGroup = null;
 
   // Current points mesh
@@ -85,10 +91,27 @@ export function createApp(initialState = {}) {
     const currentState = stateContainer.getState();
     setSceneLighting(scene, currentState.colorTheme);
 
-    // Create and add axis indicator
-    axisIndicatorGroup = createAxisIndicator(0.5);
-    axisIndicatorGroup.position.set(0, 0, 0);
-    addAxisIndicator(scene, axisIndicatorGroup);
+    // Set up axis indicator mini scene with transparent background
+    axisScene = createScene(null); // null = no background (transparent)
+    axisCamera = createCamera();
+    setPosition(axisCamera, 0, 0, 5);
+    setFOV(axisCamera, 50);
+    lookAt(axisCamera, 0, 0, 0);
+    // Set aspect ratio to match the square canvas
+    axisCamera.aspect = 1;
+    axisCamera.updateProjectionMatrix();
+    // Reset quaternion so axis camera always looks at origin head-on
+    axisCamera.quaternion.set(0, 0, 0, 1);
+
+    // Get the canvas element for axis indicator and create renderer for it
+    const axisCanvas = document.querySelector('.axis-indicator__canvas');
+    if (axisCanvas) {
+      axisRenderer = createRenderer(axisCanvas);
+    }
+
+    // Create axis indicator group (larger size for visibility)
+    axisIndicatorGroup = createAxisIndicator(1.5);
+    addAxisIndicator(axisScene, axisIndicatorGroup);
 
     // Set up animation loop
     setAnimationLoop(renderer, animate);
@@ -103,20 +126,31 @@ export function createApp(initialState = {}) {
    * Animation loop
    */
   function animate() {
-    // Update controls
+    // Update main camera controls
     updateControls();
 
-    // Sync axis indicator rotation with camera
+    // Sync axis indicator group rotation with main camera (INVERSE rotation)
+    // The axis indicator should appear to rotate, not the camera
+    // So we apply the quaternion to the group instead of the camera
     if (axisIndicatorGroup) {
       const q = getQuaternion();
       if (q) {
+        // Apply inverse rotation to the axis group so it appears to rotate
+        // while the camera stays fixed looking at origin
         axisIndicatorGroup.quaternion.copy(q);
       }
     }
 
-    // Render scene
+    // Render main scene
     if (scene && camera) {
       render(renderer, scene, camera);
+    }
+
+    // Render axis indicator scene
+    if (axisScene && axisCamera && axisRenderer) {
+      // Clear the mini renderer before each frame to ensure clean compositing
+      clearRenderer(axisRenderer);
+      axisRenderer.render(axisScene, axisCamera);
     }
   }
 
@@ -395,32 +429,30 @@ export function createApp(initialState = {}) {
 
   /**
    * Update the axis indicator based on current free axes
-   * Recreates the axis indicator group with only the free axes
-   * @param {string[]} freeAxes - Array of axis names in free mode (e.g., ['x', 'y', 'z'])
+   * Recreates the axis indicator group with only the free axes (camera axes)
+   * @param {string[]} freeAxes - Array of axis names that are free (camera axes)
    */
   function updateAxisIndicator(freeAxes) {
-    if (!scene) return;
+    if (!axisScene || !axisIndicatorGroup) return;
 
     // Remove existing axis indicator
-    if (axisIndicatorGroup) {
-      scene.remove(axisIndicatorGroup);
-      // Dispose of old resources
-      axisIndicatorGroup.traverse((child) => {
-        if (child.geometry) child.geometry.dispose();
-        if (child.material) {
-          if (Array.isArray(child.material)) {
-            child.material.forEach(m => m.dispose());
-          } else {
-            child.material.dispose();
-          }
-        }
-      });
-    }
+    axisScene.remove(axisIndicatorGroup);
 
-    // Create new axis indicator with updated free axes
-    axisIndicatorGroup = createAxisIndicator(0.5, freeAxes);
-    axisIndicatorGroup.position.set(-1.5, -1.5, 0);
-    addAxisIndicator(scene, axisIndicatorGroup);
+    // Dispose of old resources
+    axisIndicatorGroup.traverse((child) => {
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach(m => m.dispose());
+        } else {
+          child.material.dispose();
+        }
+      }
+    });
+
+    // Create new axis indicator with updated free axes (same large size)
+    axisIndicatorGroup = createAxisIndicator(1.5, freeAxes);
+    addAxisIndicator(axisScene, axisIndicatorGroup);
   }
 
   /**

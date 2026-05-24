@@ -77,6 +77,18 @@
   display: block;
   background-color: var(--color-surface-base);
   border-radius: var(--radius-sm);
+  width: 120px;
+  height: 120px;
+}
+
+.axis-indicator__label {
+  display: block;
+  text-align: center;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
 }
 
 .axis-indicator--collapsed .axis-indicator__content {

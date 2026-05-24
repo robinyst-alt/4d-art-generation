@@ -20,38 +20,51 @@ export function createRenderer(canvas = null) {
 
   const options = {
     antialias: true,
-    alpha: false,
+    alpha: true,
     preserveDrawingBuffer: true,
     powerPreference: 'high-performance'
   };
 
-  rendererInstance = new THREE.WebGLRenderer(canvas ? { canvas, ...options } : options);
-  rendererInstance.setPixelRatio(pixelRatio);
+  const renderer = new THREE.WebGLRenderer(canvas ? { canvas, ...options } : options);
+  renderer.setPixelRatio(pixelRatio);
 
-  // Get container for proper sizing
-  const container = document.getElementById('canvas-container');
-  const width = container?.clientWidth || window.innerWidth || 800;
-  const height = container?.clientHeight || window.innerHeight || 600;
-  rendererInstance.setSize(width, height);
-  rendererInstance.setClearColor(0x0a0a0f, 1);
+  // If a specific canvas is provided, use fixed size for mini renderers
+  // Otherwise, use the main container size
+  if (canvas) {
+    renderer.setSize(120, 120);
+    renderer.setClearColor(0x000000, 0);
+  } else {
+    const container = document.getElementById('canvas-container');
+    const width = container?.clientWidth || window.innerWidth || 800;
+    const height = container?.clientHeight || window.innerHeight || 600;
+    renderer.setSize(width, height);
+    renderer.setClearColor(0x0a0a0f, 1);
+
+    // Only store the main renderer instance (not mini renderers)
+    rendererInstance = renderer;
+  }
 
   // If no canvas provided, append the auto-created canvas to the container
-  if (!canvas && rendererInstance.domElement) {
+  if (!canvas && renderer.domElement) {
+    const container = document.getElementById('canvas-container');
+
     // Ensure canvas has proper styling
-    rendererInstance.domElement.style.position = 'absolute';
-    rendererInstance.domElement.style.top = '0';
-    rendererInstance.domElement.style.left = '0';
-    rendererInstance.domElement.style.width = '100%';
-    rendererInstance.domElement.style.height = '100%';
-    rendererInstance.domElement.style.zIndex = '0';
+    renderer.domElement.style.position = 'absolute';
+    renderer.domElement.style.top = '0';
+    renderer.domElement.style.left = '0';
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
+    renderer.domElement.style.zIndex = '0';
 
     if (container) {
       // Insert canvas at the beginning so axis indicator overlays it
-      container.insertBefore(rendererInstance.domElement, container.firstChild);
+      container.insertBefore(renderer.domElement, container.firstChild);
     }
   }
 
-  return rendererInstance;
+  // Auto-clear is already true by default, ensuring proper isolation between renderers
+
+  return renderer;
 }
 
 /**
@@ -131,4 +144,16 @@ export function resizeToFit(renderer, container) {
  */
 export function getRenderer() {
   return rendererInstance;
+}
+
+/**
+ * Clear the renderer's buffers
+ * @param {THREE.WebGLRenderer} renderer - Three.js renderer
+ * @param {boolean} [clearColor=true] - Whether to clear color buffer
+ * @param {boolean} [clearDepth=true] - Whether to clear depth buffer
+ */
+export function clearRenderer(renderer, clearColor = true, clearDepth = true) {
+  if (renderer) {
+    renderer.clear(clearColor, clearDepth);
+  }
 }
