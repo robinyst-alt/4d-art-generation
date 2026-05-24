@@ -96,6 +96,16 @@ export function setAxisMode(state, axis, mode) {
     }
   }
 
+  // When changing mode, handle locked axis scenario
+  // If axis is locked and mode is changing, auto-unlock first
+  const isAxisLocked = state.lockedAxes && state.lockedAxes.includes(axis);
+  let newLockedAxes = [...(state.lockedAxes || [])];
+
+  if (isAxisLocked && currentMode !== mode) {
+    // Auto-unlock when mode changes for a locked axis
+    newLockedAxes = newLockedAxes.filter(a => a !== axis);
+  }
+
   // Create new state with immutable update
   return {
     axes: {
@@ -105,7 +115,7 @@ export function setAxisMode(state, axis, mode) {
         mode: mode
       }
     },
-    lockedAxes: [...(state.lockedAxes || [])]
+    lockedAxes: newLockedAxes
   };
 }
 
