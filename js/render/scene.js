@@ -146,44 +146,68 @@ export function getScene() {
 export function createAxisIndicator(size = 1, freeAxes = ['x', 'y', 'z']) {
   const group = new THREE.Group();
 
-  // Basis vectors - these are the "seats"
-  const BASES = [
+  // Standard basis vectors as "seats" - fixed directional seats
+  // Each axis claims a seat when it becomes free, and keeps it until it becomes slice
+  const SEATS = [
     new THREE.Vector3(1, 0, 0),
     new THREE.Vector3(0, 1, 0),
     new THREE.Vector3(0, 0, 1)
   ];
 
-  // Each axis gets a "seat index" when first assigned
-  // This is persistent - when an axis leaves, its seat stays empty
-  // Other axes don't move seats
-  const axisSeats = {};
-  let nextSeatIndex = 0;
+  // Track which seats are occupied by which axes
+  // This persists across calls to maintain stability when axes change mode
+  if (!createAxisIndicator.seatAssignments) {
+    createAxisIndicator.seatAssignments = {};
+  }
 
-  // Assign seats to axes: each axis gets a fixed seat, no reassignment
+  // For each free axis, find the first available seat
   freeAxes.forEach(axisName => {
-    if (!(axisName in axisSeats)) {
-      // New axis - assign next available seat
-      axisSeats[axisName] = nextSeatIndex;
-      nextSeatIndex++;
+    let assigned = false;
+
+    // Check if this axis already has a seat (persist across calls)
+    const existingSeatIndex = Object.entries(createAxisIndicator.seatAssignments)
+      .find(([axis, seatIdx]) => axis === axisName)?.[1];
+
+    if (existingSeatIndex !== undefined) {
+      // This axis already has a seat - check if it's still valid
+      const seatTakenByAnother = Object.entries(createAxisIndicator.seatAssignments)
+        .some(([axis, seatIdx]) => axis !== axisName && seatIdx === existingSeatIndex);
+
+      if (!seatTakenByAnother) {
+        // Seat is still valid and unoccupied by others
+        assigned = true;
+      }
     }
+
+    // If no existing valid seat, find first available seat
+    if (!assigned) {
+      for (let i = 0; i < SEATS.length; i++) {
+        const seatTaken = Object.entries(createAxisIndicator.seatAssignments)
+          .some(([axis, seatIdx]) => axis !== axisName && seatIdx === i);
+
+        if (!seatTaken) {
+          // Claim this seat
+          createAxisIndicator.seatAssignments[axisName] = i;
+          assigned = true;
+          break;
+        }
+      }
+    }
+
+    // Clean up seats for axes that are no longer free
+    Object.keys(createAxisIndicator.seatAssignments).forEach(axis => {
+      if (!freeAxes.includes(axis)) {
+        delete createAxisIndicator.seatAssignments[axis];
+      }
+    });
   });
 
   // Create axis lines with labels
   freeAxes.forEach(axisName => {
-    const seatIndex = axisSeats[axisName];
+    const seatIndex = createAxisIndicator.seatAssignments[axisName];
+    const direction = seatIndex !== undefined ? SEATS[seatIndex].clone() : new THREE.Vector3(1, 0, 0);
     const isSmall = axisName === 'w';
     const axisSize = isSmall ? size * 0.6 : size;
-
-    let direction;
-    if (seatIndex < 2) {
-      // Seat 0 or 1: use standard basis
-      direction = BASES[seatIndex].clone();
-    } else {
-      // Seat 2: compute perpendicular direction from seats 0 and 1
-      const dir0 = BASES[axisSeats[freeAxes[0]]] || BASES[0];
-      const dir1 = BASES[axisSeats[freeAxes[1]]] || BASES[1];
-      direction = dir0.clone().cross(dir1).normalize();
-    }
 
     // Line from origin to direction
     const lineEnd = direction.clone().normalize().multiplyScalar(axisSize);
