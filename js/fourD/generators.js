@@ -50,15 +50,16 @@ function sdfCube(x, y, z, size) {
 /**
  * 8-color gradient palette: deep gray to white
  * Inner (core) points = darker, outer points = lighter
+ * More contrast for visible gradient effect
  */
 const GRADIENT_COLORS_8 = [
-  { r: 0.2,  g: 0.2,  b: 0.2  }, // 深灰 - innermost
-  { r: 0.3,  g: 0.3,  b: 0.3  }, // 暗灰
-  { r: 0.4,  g: 0.4,  b: 0.4  }, // 灰
-  { r: 0.5,  g: 0.5,  b: 0.5  }, // 中灰
-  { r: 0.6,  g: 0.6,  b: 0.6  }, // 浅灰
-  { r: 0.75, g: 0.75, b: 0.75 }, // 亮灰
-  { r: 0.88, g: 0.88, b: 0.88 }, // 浅灰白
+  { r: 0.05, g: 0.05, b: 0.05 }, // 深灰黑 - innermost (near black)
+  { r: 0.15, g: 0.15, b: 0.15 }, // 深灰
+  { r: 0.30, g: 0.30, b: 0.30 }, // 暗灰
+  { r: 0.50, g: 0.50, b: 0.50 }, // 中灰
+  { r: 0.70, g: 0.70, b: 0.70 }, // 浅灰
+  { r: 0.85, g: 0.85, b: 0.85 }, // 亮灰
+  { r: 0.95, g: 0.95, b: 0.95 }, // 浅灰白
   { r: 1.0,  g: 1.0,  b: 1.0  }, // 白色 - outermost
 ];
 
