@@ -138,6 +138,7 @@ export function getScene() {
  * Creates a small coordinate system with x, y, z axes as arrows
  * Only axes in "free" mode (not slice) are displayed
  * Uses grayscale coloring for all axes
+ * Dynamic axis direction assignment for orthogonality
  * @param {number} size - Size of the axis indicator
  * @param {string[]} freeAxes - Array of axis names in free mode (e.g., ['x', 'y', 'z'])
  * @returns {THREE.Group} Group containing the axis lines
@@ -145,68 +146,71 @@ export function getScene() {
 export function createAxisIndicator(size = 1, freeAxes = ['x', 'y', 'z']) {
   const group = new THREE.Group();
 
-  // Create arrow for each axis that is in free mode (camera axes)
-  // Per PRD F-108: 显示相机轴（非锁定的轴），数量动态显示
-  // 当锁定=0时显示XYZW四轴，锁定=1时显示XYZ三轴
-  const axisConfigs = [
-    { name: 'x', direction: new THREE.Vector3(1, 0, 0) },
-    { name: 'y', direction: new THREE.Vector3(0, 1, 0) },
-    { name: 'z', direction: new THREE.Vector3(0, 0, 1) },
-    // W axis: perpendicular to XYZ, shown as a smaller indicator
-    // Represents the 4th dimension in the visualization
-    // W axis: perpendicular to XYZ (all axes are perpendicular in 4D)
-    // Direction (1,1,1) is perpendicular to X(1,0,0), Y(0,1,0), Z(0,0,1)
-    // dot((1,1,1), (1,0,0)) = 1 ≠ 0 ✗
-    // Actually we need W to point along 4th dimension - use diagonal (1,1,1)
-    // But to be perpendicular to all 3 axes requires special projection
-    // Since this is a conceptual 4D axis indicator, use (1,1,1) direction
-    { name: 'w', direction: new THREE.Vector3(1, 1, 1), isW: true }
-  ];
+  // Standard basis vectors for assignment
+  const STANDARD_BASIS = {
+    x: new THREE.Vector3(1, 0, 0),
+    y: new THREE.Vector3(0, 1, 0),
+    z: new THREE.Vector3(0, 0, 1)
+  };
+  const basisOrder = ['x', 'y', 'z'];
 
-  // Filter to only free (camera) axes
-  const visibleAxes = axisConfigs.filter(axis => freeAxes.includes(axis.name));
+  // Assign directions dynamically to maintain orthogonality
+  // First axis -> first available standard basis
+  // Second axis -> next available standard basis
+  // Third axis -> cross product of first two (perpendicular to both)
+  const axisDirections = {};
+  const usedBasises = [];
 
-  visibleAxes.forEach(({ name, direction, isW }) => {
-    const axisSize = isW ? size * 0.6 : size; // W appears smaller as it's conceptual
+  freeAxes.forEach((axisName, index) => {
+    if (index < 2) {
+      // First two axes get standard basis vectors
+      const basisKey = basisOrder[usedBasises.length];
+      axisDirections[axisName] = STANDARD_BASIS[basisKey].clone();
+      usedBasises.push(basisKey);
+    } else {
+      // Third axis: cross product of first two assigned directions
+      const dir0 = axisDirections[freeAxes[0]];
+      const dir1 = axisDirections[freeAxes[1]];
+      axisDirections[axisName] = dir0.clone().cross(dir1).normalize();
+    }
+  });
 
-    // Create line geometry
-    const points = [
+  // Create axis lines with labels
+  freeAxes.forEach(axisName => {
+    const direction = axisDirections[axisName];
+    const isSmall = axisName === 'w';
+    const axisSize = isSmall ? size * 0.6 : size;
+
+    // Line from origin to direction
+    const lineEnd = direction.clone().normalize().multiplyScalar(axisSize);
+    const lineGeometry = new THREE.BufferGeometry().setFromPoints([
       new THREE.Vector3(0, 0, 0),
-      direction.clone().normalize().multiplyScalar(axisSize)
-    ];
-    const geometry = new THREE.BufferGeometry().setFromPoints(points);
-    const material = new THREE.LineBasicMaterial({ linewidth: 2 });
-    material.color.setRGB(0.8, 0.8, 0.8); // Grayscale per PRD
-    const line = new THREE.Line(geometry, material);
+      lineEnd
+    ]);
+    const lineMaterial = new THREE.LineBasicMaterial({ color: 0xcccccc });
+    const line = new THREE.Line(lineGeometry, lineMaterial);
     group.add(line);
 
-    // Create arrow head (smaller for W axis)
+    // Arrow head (cone)
     const arrowLength = axisSize * 0.15;
     const arrowWidth = arrowLength * 0.5;
-    const arrowGeom = new THREE.ConeGeometry(arrowWidth, arrowLength, 8);
-    const arrowMaterial = new THREE.MeshBasicMaterial();
-    arrowMaterial.color.setRGB(0.8, 0.8, 0.8); // Grayscale per PRD
-    const arrowMesh = new THREE.Mesh(arrowGeom, arrowMaterial);
+    const coneGeometry = new THREE.ConeGeometry(arrowWidth, arrowLength, 8);
+    const coneMaterial = new THREE.MeshBasicMaterial({ color: 0xcccccc });
+    const arrowMesh = new THREE.Mesh(coneGeometry, coneMaterial);
 
-    // Position arrow at the end of the line
-    arrowMesh.position.copy(direction.clone().normalize().multiplyScalar(axisSize - arrowLength * 0.5));
+    // Position arrow at end of line
+    const arrowPos = lineEnd.clone().normalize().multiplyScalar(axisSize - arrowLength * 0.5);
+    arrowMesh.position.copy(arrowPos);
 
-    // Orient arrow to point along the axis direction using lookAt
-    if (name === 'x') {
-      arrowMesh.rotation.z = -Math.PI / 2;
-    } else if (name === 'z') {
-      arrowMesh.rotation.x = Math.PI / 2;
-    } else if (name === 'w') {
-      // Use lookAt to orient cone's +Y axis to point along direction
-      arrowMesh.lookAt(direction.clone().normalize().multiplyScalar(2));
-      // lookAt makes +Y point at target, we want +Y to point away, so rotate 180
-      arrowMesh.rotateX(Math.PI);
-    }
-    // 'y' default orientation is already pointing up
+    // Orient arrow along direction using lookAt
+    const lookTarget = direction.clone().normalize().multiplyScalar(2);
+    arrowMesh.lookAt(lookTarget);
+    // Rotate 180° to make arrow point away from origin
+    arrowMesh.rotateX(Math.PI);
 
     group.add(arrowMesh);
 
-    // Create label sprite for axis
+    // Label sprite
     const canvas = document.createElement('canvas');
     canvas.width = 64;
     canvas.height = 64;
@@ -215,12 +219,12 @@ export function createAxisIndicator(size = 1, freeAxes = ['x', 'y', 'z']) {
     ctx.font = 'bold 40px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(name.toUpperCase(), 32, 32);
+    ctx.fillText(axisName.toUpperCase(), 32, 32);
 
     const texture = new THREE.CanvasTexture(canvas);
     const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
     const sprite = new THREE.Sprite(spriteMaterial);
-    sprite.position.copy(direction.clone().normalize().multiplyScalar(axisSize * 1.2));
+    sprite.position.copy(lineEnd.clone().normalize().multiplyScalar(axisSize * 1.2));
     sprite.scale.set(0.2, 0.2, 0.2);
     group.add(sprite);
   });
