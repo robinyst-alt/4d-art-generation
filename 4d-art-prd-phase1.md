@@ -2,7 +2,7 @@
 
 **状态**：Phase 1 实现完成
 **创建时间**：2026-05-10
-**文档版本**：v0.15
+**文档版本**：v0.16
 **最后更新**：2026-05-24
 
 ---
@@ -278,6 +278,11 @@
    - 已占座位不会被其他轴顶替（最小分配改变原则）
    - 例：Y和Z变成切片后，W变成自由 → W抢到(0,1,0)座位
 
+8. **图形位置稳定性**
+   - 切片轴切换时，图形位置保持稳定
+   - 关键修复：toThreePoints 使用 sliceValues 参数获取被切片轴的实际值（如 Y=12），而非默认 0
+   - 坐标映射：freeAxes 确定循环索引到轴的映射，sliceValues 确定被切片轴的固定值
+
 **实现文件**：
 - `js/render/scene.js` - `createAxisIndicator()`, `addAxisIndicator()`
 - `js/render/camera.js` - `getQuaternion()`
@@ -497,6 +502,8 @@
 
 | Commit | 描述 |
 |--------|------|
+| `b24ca67` | fix: geometry position drift when axis mode changes |
+| `a05bc9a` | fix: F-108 axis direction seat assignment with stability |
 | `05a2b10` | fix: updateHashDisplay not accessible from main.js |
 | `5a61035` | fix: startup issues - variable declaration and missing actions |
 | `596b446` | fix: update hash display on shape/parameters change |
