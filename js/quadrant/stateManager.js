@@ -350,7 +350,7 @@ function extract3DSlice(matrix, resolution, sliceAxis, sliceValue, dimensions) {
     }
   }
 
-  return { data: sliceData, dimensions, sliceAxes: [sliceAxis], freeAxes };
+  return { data: sliceData, dimensions, sliceAxes: [sliceAxis], freeAxes, sliceValues: { [sliceAxis]: sliceValue } };
 }
 
 /**

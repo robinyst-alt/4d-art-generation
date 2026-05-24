@@ -87,11 +87,13 @@ export function toThreePoints(sliceData, resolution, dimensions = 3, freeAxes = 
 
   if (dimensions === 3) {
     // 3D slice: [z][y][x][rgba]
+    // When W is sliced (3D case with one slice axis), w should use the slice value
+    const wSliceValue = sliceValues && sliceValues.w !== undefined ? sliceValues.w : 0;
     for (let z = 0; z < resolution; z++) {
       for (let y = 0; y < resolution; y++) {
         for (let x = 0; x < resolution; x++) {
           const index = (z * resolution * resolution + y * resolution + x) * 4;
-          processPoint(sliceData, index, x, y, z, 0, resolution, positions, colors);
+          processPoint(sliceData, index, x, y, z, wSliceValue, resolution, positions, colors);
         }
       }
     }
