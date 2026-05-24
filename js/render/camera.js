@@ -81,8 +81,8 @@ export function enableControls(camera, domElement) {
   // Constrain camera distance to keep shape always in view
   // minDistance: prevents camera from going inside the shape
   // maxDistance: prevents camera from going too far (shape becomes too small)
-  controlsInstance.minDistance = 2;
-  controlsInstance.maxDistance = 20;
+  controlsInstance.minDistance = 1;
+  controlsInstance.maxDistance = 10;
 
   return controlsInstance;
 }
