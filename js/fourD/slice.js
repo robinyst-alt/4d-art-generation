@@ -91,7 +91,7 @@ export function toThreePoints(sliceData, resolution, dimensions = 3, freeAxes = 
       for (let y = 0; y < resolution; y++) {
         for (let x = 0; x < resolution; x++) {
           const index = (z * resolution * resolution + y * resolution + x) * 4;
-          processPoint(sliceData, index, x, y, z, resolution, positions, colors);
+          processPoint(sliceData, index, x, y, z, 0, resolution, positions, colors);
         }
       }
     }
@@ -110,17 +110,20 @@ export function toThreePoints(sliceData, resolution, dimensions = 3, freeAxes = 
         let x = sliceValues && sliceValues.x !== undefined ? sliceValues.x : 0;
         let y = sliceValues && sliceValues.y !== undefined ? sliceValues.y : 0;
         let z = sliceValues && sliceValues.z !== undefined ? sliceValues.z : 0;
+        let w = sliceValues && sliceValues.w !== undefined ? sliceValues.w : 0;
 
         // Override with loop indices for free axes
         if (axis0 === 'x') { x = i; }
         else if (axis0 === 'y') { y = i; }
         else if (axis0 === 'z') { z = i; }
+        else if (axis0 === 'w') { w = i; }
 
         if (axis1 === 'x') { x = j; }
         else if (axis1 === 'y') { y = j; }
         else if (axis1 === 'z') { z = j; }
+        else if (axis1 === 'w') { w = j; }
 
-        processPoint(sliceData, index, x, y, z, resolution, positions, colors);
+        processPoint(sliceData, index, x, y, z, w, resolution, positions, colors);
       }
     }
   } else if (dimensions === 1) {
@@ -133,13 +136,15 @@ export function toThreePoints(sliceData, resolution, dimensions = 3, freeAxes = 
       let x = sliceValues && sliceValues.x !== undefined ? sliceValues.x : 0;
       let y = sliceValues && sliceValues.y !== undefined ? sliceValues.y : 0;
       let z = sliceValues && sliceValues.z !== undefined ? sliceValues.z : 0;
+      let w = sliceValues && sliceValues.w !== undefined ? sliceValues.w : 0;
 
       // Override with loop index for the free axis
       if (axis === 'x') { x = i; }
       else if (axis === 'y') { y = i; }
       else if (axis === 'z') { z = i; }
+      else if (axis === 'w') { w = i; }
 
-      processPoint(sliceData, index, x, y, z, resolution, positions, colors);
+      processPoint(sliceData, index, x, y, z, w, resolution, positions, colors);
     }
   }
 
@@ -152,7 +157,7 @@ export function toThreePoints(sliceData, resolution, dimensions = 3, freeAxes = 
 /**
  * Process a single point and add to positions/colors arrays
  */
-function processPoint(sliceData, index, x, y, z, resolution, positions, colors) {
+function processPoint(sliceData, index, x, y, z, w, resolution, positions, colors) {
   // Skip transparent points
   if (sliceData[index + 3] <= 0) {
     return;
