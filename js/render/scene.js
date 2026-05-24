@@ -202,11 +202,11 @@ export function createAxisIndicator(size = 1, freeAxes = ['x', 'y', 'z']) {
     const arrowPos = lineEnd.clone().normalize().multiplyScalar(axisSize - arrowLength * 0.5);
     arrowMesh.position.copy(arrowPos);
 
-    // Orient arrow along direction using lookAt
-    const lookTarget = direction.clone().normalize().multiplyScalar(2);
-    arrowMesh.lookAt(lookTarget);
-    // Rotate 180° to make arrow point away from origin
-    arrowMesh.rotateX(Math.PI);
+    // Orient arrow tip (+Y of cone) along direction using quaternion
+    // ConeGeometry tip points at +Y by default
+    const quaternion = new THREE.Quaternion();
+    quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction);
+    arrowMesh.quaternion.copy(quaternion);
 
     group.add(arrowMesh);
 
