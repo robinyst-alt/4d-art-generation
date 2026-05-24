@@ -219,11 +219,11 @@ export function createApp(initialState = {}) {
 
       const state = stateContainer.getState();
       const material = new THREE.PointsMaterial({
-        size: 0.5,
+        size: 0.12,
         vertexColors: true,
         transparent: true,
         opacity: 1.0,
-        sizeAttenuation: true
+        sizeAttenuation: false
       });
 
       currentPoints = new THREE.Points(geometry, material);
@@ -260,11 +260,11 @@ export function createApp(initialState = {}) {
 
     // Create material
     const material = new THREE.PointsMaterial({
-      size: 0.5,
+      size: 0.12,
       vertexColors: true,
       transparent: true,
       opacity: 1.0,
-      sizeAttenuation: true
+      sizeAttenuation: false
     });
 
     // Create points and add to scene
