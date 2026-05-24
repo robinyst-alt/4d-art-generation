@@ -34,7 +34,8 @@ const DEFAULT_STATE = {
   isRendering: false,
   matrix: null,
   pointSpacing: 1,
-  contentHash: null
+  contentHash: null,
+  quadrantState: null
 };
 
 /**
@@ -468,6 +469,14 @@ export function createApp(initialState = {}) {
     }
   }
 
+  /**
+   * Store quadrant state for use in updateSlice (F107 point spacing)
+   * @param {Object} qs - Quadrant state from main.js
+   */
+  function setQuadrantState(qs) {
+    dispatch(stateContainer, { type: ACTIONS.SET_QUADRANT_STATE, payload: qs });
+  }
+
   // Return public API
   return {
     init,
@@ -475,6 +484,8 @@ export function createApp(initialState = {}) {
     generate: generateShape,
     updateSlice,
     updateAxisIndicator,
+    setQuadrantState,
+    setQuadrantState,
     resizeAxisCanvas,
     zoomAxisIndicator,
     getAxisScale,

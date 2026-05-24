@@ -16,7 +16,8 @@ export const ACTIONS = {
   SET_POINT_SPACING: 'SET_POINT_SPACING',
   SET_CONTENT_HASH: 'SET_CONTENT_HASH',
   SET_RESOLUTION: 'SET_RESOLUTION',
-  SET_COLOR_THEME: 'SET_COLOR_THEME'
+  SET_COLOR_THEME: 'SET_COLOR_THEME',
+  SET_QUADRANT_STATE: 'SET_QUADRANT_STATE'
 };
 
 // State subscribers
@@ -81,6 +82,10 @@ export function dispatch(stateContainer, action) {
 
     case ACTIONS.SET_COLOR_THEME:
       newState = { ...currentState, colorTheme: action.payload };
+      break;
+
+    case ACTIONS.SET_QUADRANT_STATE:
+      newState = { ...currentState, quadrantState: action.payload };
       break;
 
     default:

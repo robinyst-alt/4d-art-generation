@@ -528,6 +528,9 @@ function updateSliceFromQuadrantState() {
     const primarySliceAxis = sliceAxes[0];
     const sliceValue = quadrantState.axes[primarySliceAxis].sliceValue;
 
+    // Store quadrantState in app for F107 (point spacing) to use
+    appInstance.setQuadrantState(quadrantState);
+
     // Update the app state with the new slice
     appInstance.updateSlice(currentMatrix, state.resolution, sliceValue, quadrantState);
   }
