@@ -48,34 +48,38 @@ function sdfCube(x, y, z, size) {
 }
 
 /**
- * 8-color gradient palette: dark gray to light gray (high contrast)
- * Inner (core) points = darker, outer points = lighter
- * High contrast for visible gradient effect
+ * 5-color high-contrast gradient palette: dark blue → blue → cyan → light cyan → white
+ * Stepped segments for clear visual layering
  */
 const GRADIENT_COLORS_8 = [
-  { r: 0.10, g: 0.10, b: 0.10 }, // 深灰黑 - innermost
-  { r: 0.25, g: 0.25, b: 0.25 }, // 深灰
-  { r: 0.45, g: 0.45, b: 0.45 }, // 暗灰
-  { r: 0.60, g: 0.60, b: 0.60 }, // 中灰
-  { r: 0.75, g: 0.75, b: 0.75 }, // 浅灰
-  { r: 0.88, g: 0.88, b: 0.88 }, // 亮灰
-  { r: 0.95, g: 0.95, b: 0.95 }, // 浅灰白
-  { r: 1.0,  g: 1.0,  b: 1.0  }, // 白色 - outermost
+  { r: 0.05, g: 0.05, b: 0.20 }, // 深蓝 - innermost
+  { r: 0.15, g: 0.30, b: 0.85 }, // 蓝
+  { r: 0.20, g: 0.65, b: 0.90 }, // 青蓝
+  { r: 0.60, g: 0.85, b: 0.95 }, // 浅青
+  { r: 0.95, g: 0.98, b: 1.00 }, // 近白
 ];
 
 /**
  * Get gradient color based on normalized distance from center
- * Steeper curve: inner region has more pixels (slower transition)
+ * Stepped segments for clear visual layering (linear segmentation)
  * @param {number} normalizedDist - Distance normalized to [0, 1], where 0 = center, 1 = surface
  * @returns {{r: number, g: number, b: number}} RGB color values
  */
 function getGradientColor(normalizedDist) {
   const clampedDist = Math.max(0, Math.min(1, normalizedDist));
-  // Use power curve < 1 for steeper transition
-  // More pixels get inner colors, outer transition is faster
-  const curve = Math.pow(clampedDist, 0.45);
-  const index = Math.floor(curve * GRADIENT_COLORS_8.length);
-  return GRADIENT_COLORS_8[Math.min(index, GRADIENT_COLORS_8.length - 1)];
+  // Linear stepped segmentation with 5 colors
+  const segmentCount = GRADIENT_COLORS_8.length;
+  const segmentSize = 1 / (segmentCount - 1);
+  const segmentIndex = Math.min(Math.floor(clampedDist / segmentSize), segmentCount - 2);
+  const localT = (clampedDist - segmentIndex * segmentSize) / segmentSize;
+  // Linear interpolation within segment
+  const c1 = GRADIENT_COLORS_8[segmentIndex];
+  const c2 = GRADIENT_COLORS_8[segmentIndex + 1];
+  return {
+    r: c1.r + (c2.r - c1.r) * localT,
+    g: c1.g + (c2.g - c1.g) * localT,
+    b: c1.b + (c2.b - c1.b) * localT
+  };
 }
 
 /**

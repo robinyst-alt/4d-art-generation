@@ -82,7 +82,7 @@ export function createApp(initialState = {}) {
     resizeToFit(renderer, container);
 
     // Set camera position
-    setPosition(camera, 0, 0, 4);
+    setPosition(camera, 0, 0, 2);
     setFOV(camera, 60);
     lookAt(camera, 0, 0, 0);
 
