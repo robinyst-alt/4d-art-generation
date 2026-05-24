@@ -206,8 +206,7 @@ export function createAxisIndicator(size = 1, freeAxes = ['x', 'y', 'z']) {
   freeAxes.forEach(axisName => {
     const seatIndex = createAxisIndicator.seatAssignments[axisName];
     const direction = seatIndex !== undefined ? SEATS[seatIndex].clone() : new THREE.Vector3(1, 0, 0);
-    const isSmall = axisName === 'w';
-    const axisSize = isSmall ? size * 0.6 : size;
+    const axisSize = size;
 
     // Line from origin to direction
     const lineEnd = direction.clone().normalize().multiplyScalar(axisSize);
@@ -220,7 +219,7 @@ export function createAxisIndicator(size = 1, freeAxes = ['x', 'y', 'z']) {
     group.add(line);
 
     // Arrow head (cone)
-    const arrowLength = axisSize * 0.15;
+    const arrowLength = 0.15;
     const arrowWidth = arrowLength * 0.5;
     const coneGeometry = new THREE.ConeGeometry(arrowWidth, arrowLength, 8);
     const coneMaterial = new THREE.MeshBasicMaterial({ color: 0xcccccc });
