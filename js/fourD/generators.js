@@ -48,32 +48,32 @@ function sdfCube(x, y, z, size) {
 }
 
 /**
- * 8-color gradient palette: deep gray to white
+ * 8-color gradient palette: deep gray to light gray
  * Inner (core) points = darker, outer points = lighter
- * More contrast for visible gradient effect
+ * Adjusted for better visual distinction (less white dominance)
  */
 const GRADIENT_COLORS_8 = [
-  { r: 0.05, g: 0.05, b: 0.05 }, // 深灰黑 - innermost (near black)
-  { r: 0.15, g: 0.15, b: 0.15 }, // 深灰
-  { r: 0.30, g: 0.30, b: 0.30 }, // 暗灰
-  { r: 0.50, g: 0.50, b: 0.50 }, // 中灰
+  { r: 0.08, g: 0.08, b: 0.08 }, // 深灰黑 - innermost
+  { r: 0.20, g: 0.20, b: 0.20 }, // 深灰
+  { r: 0.38, g: 0.38, b: 0.38 }, // 暗灰
+  { r: 0.55, g: 0.55, b: 0.55 }, // 中灰
   { r: 0.70, g: 0.70, b: 0.70 }, // 浅灰
-  { r: 0.85, g: 0.85, b: 0.85 }, // 亮灰
-  { r: 0.95, g: 0.95, b: 0.95 }, // 浅灰白
-  { r: 1.0,  g: 1.0,  b: 1.0  }, // 白色 - outermost
+  { r: 0.82, g: 0.82, b: 0.82 }, // 亮灰
+  { r: 0.90, g: 0.90, b: 0.90 }, // 浅灰白
+  { r: 0.96, g: 0.96, b: 0.96  }, // 近白 - outermost (not pure white)
 ];
 
 /**
  * Get gradient color based on normalized distance from center
- * Non-linear mapping: inner regions transition slower, outer regions faster
+ * Uses linear-ish mapping for more even color distribution
  * @param {number} normalizedDist - Distance normalized to [0, 1], where 0 = center, 1 = surface
  * @returns {{r: number, g: number, b: number}} RGB color values
  */
 function getGradientColor(normalizedDist) {
   const clampedDist = Math.max(0, Math.min(1, normalizedDist));
-  // Use power curve for non-linear gradient
-  // Inner (small dist): slow transition, outer (large dist): fast transition
-  const curve = Math.pow(clampedDist, 0.6);
+  // Use sqrt curve for more linear transition (less compression at ends)
+  // Inner and outer regions have more balanced color counts
+  const curve = Math.sqrt(clampedDist);
   const index = Math.floor(curve * GRADIENT_COLORS_8.length);
   return GRADIENT_COLORS_8[Math.min(index, GRADIENT_COLORS_8.length - 1)];
 }
