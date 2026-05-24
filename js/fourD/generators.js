@@ -65,13 +65,17 @@ const GRADIENT_COLORS_8 = [
 
 /**
  * Get gradient color based on normalized distance from center
+ * Non-linear mapping: inner regions transition slower, outer regions faster
  * @param {number} normalizedDist - Distance normalized to [0, 1], where 0 = center, 1 = surface
  * @returns {{r: number, g: number, b: number}} RGB color values
  */
 function getGradientColor(normalizedDist) {
   const clampedDist = Math.max(0, Math.min(1, normalizedDist));
-  const index = Math.floor(clampedDist * (GRADIENT_COLORS_8.length - 1));
-  return GRADIENT_COLORS_8[index];
+  // Use power curve for non-linear gradient
+  // Inner (small dist): slow transition, outer (large dist): fast transition
+  const curve = Math.pow(clampedDist, 0.6);
+  const index = Math.floor(curve * GRADIENT_COLORS_8.length);
+  return GRADIENT_COLORS_8[Math.min(index, GRADIENT_COLORS_8.length - 1)];
 }
 
 /**
