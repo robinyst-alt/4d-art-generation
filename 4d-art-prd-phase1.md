@@ -259,6 +259,15 @@
    - 边框: 深灰色 (#333333)
    - 折叠按钮、标签文字均为白色
 
+5. **可拖动位置**
+   - 鼠标点击坐标轴指示器框内（除按钮和resize手柄外）
+   - 拖动可以移动整个框的位置
+   - 位置由 CSS position: absolute 的 left/top 控制
+
+6. **旋转方向修正**
+   - 坐标轴旋转方向与相机视角同步
+   - 使用四元数共轭（inverse）确保上下旋转方向正确
+
 **实现文件**：
 - `js/render/scene.js` - `createAxisIndicator()`, `addAxisIndicator()`
 - `js/render/camera.js` - `getQuaternion()`

@@ -163,6 +163,9 @@ async function onDOMContentLoaded() {
 
   // Set up axis indicator zoom on wheel
   setupAxisIndicatorZoom();
+
+  // Set up axis indicator draggable position
+  setupAxisIndicatorDraggable();
 }
 
 /**
@@ -229,6 +232,56 @@ function setupAxisIndicatorResize() {
     startY = e.clientY;
     startWidth = canvas.offsetWidth;
     startHeight = canvas.offsetHeight;
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  });
+}
+
+/**
+ * Set up axis indicator draggable position
+ */
+function setupAxisIndicatorDraggable() {
+  const axisIndicator = document.getElementById('axis-indicator');
+  const toggleBtn = axisIndicator?.querySelector('.axis-indicator__toggle');
+
+  if (!axisIndicator) return;
+
+  let isDragging = false;
+  let startX, startY, startLeft, startTop;
+
+  const onMouseMove = (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+
+    const newLeft = startLeft + dx;
+    const newTop = startTop + dy;
+
+    axisIndicator.style.left = newLeft + 'px';
+    axisIndicator.style.top = newTop + 'px';
+  };
+
+  const onMouseUp = () => {
+    isDragging = false;
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+  };
+
+  // Only start drag if clicking on the content area (not toggle or resize)
+  axisIndicator.addEventListener('mousedown', (e) => {
+    // Don't drag if clicking on toggle button or resize handle
+    if (e.target === toggleBtn || e.target.closest('.axis-indicator__resize-handle')) {
+      return;
+    }
+    e.preventDefault();
+    isDragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    const rect = axisIndicator.getBoundingClientRect();
+    startLeft = rect.left;
+    startTop = rect.top;
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
   });

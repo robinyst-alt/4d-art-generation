@@ -130,15 +130,15 @@ export function createApp(initialState = {}) {
     // Update main camera controls
     updateControls();
 
-    // Sync axis indicator group rotation with main camera (INVERSE rotation)
-    // The axis indicator should appear to rotate, not the camera
-    // So we apply the quaternion to the group instead of the camera
+    // Sync axis indicator group rotation with main camera
+    // The axis indicator should appear to rotate the same way as the camera
+    // is observing it - use the camera's quaternion directly
     if (axisIndicatorGroup) {
       const q = getQuaternion();
       if (q) {
-        // Apply inverse rotation to the axis group so it appears to rotate
-        // while the camera stays fixed looking at origin
-        axisIndicatorGroup.quaternion.copy(q);
+        // Apply camera's rotation to axis group (conjugate = inverse for unit quaternion)
+        // This makes the axes show the correct orientation as camera view changes
+        axisIndicatorGroup.quaternion.copy(q).invert();
       }
     }
 
