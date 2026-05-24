@@ -155,34 +155,11 @@ async function onDOMContentLoaded() {
   // Set up keyboard shortcuts
   document.addEventListener('keydown', handleKeyboardShortcuts);
 
-  // Set up axis indicator toggle (collapsible widget)
-  setupAxisIndicatorToggle();
-
   // Set up axis indicator resize handle
   setupAxisIndicatorResize();
 
-  // Set up axis indicator zoom on wheel
-  setupAxisIndicatorZoom();
-
   // Set up axis indicator draggable position
   setupAxisIndicatorDraggable();
-}
-
-/**
- * Set up axis indicator collapsible toggle
- */
-function setupAxisIndicatorToggle() {
-  const axisIndicator = document.getElementById('axis-indicator');
-  const toggleBtn = axisIndicator?.querySelector('.axis-indicator__toggle');
-
-  if (toggleBtn) {
-    toggleBtn.addEventListener('click', () => {
-      const isExpanded = toggleBtn.getAttribute('aria-expanded') === 'true';
-      toggleBtn.setAttribute('aria-expanded', (!isExpanded).toString());
-      axisIndicator.classList.toggle('axis-indicator--collapsed', isExpanded);
-      toggleBtn.textContent = isExpanded ? '+' : '−';
-    });
-  }
 }
 
 /**
@@ -238,11 +215,11 @@ function setupAxisIndicatorResize() {
 }
 
 /**
- * Set up axis indicator draggable position
+ * Set up axis indicator draggable position (whole box is draggable)
  */
 function setupAxisIndicatorDraggable() {
   const axisIndicator = document.getElementById('axis-indicator');
-  const toggleBtn = axisIndicator?.querySelector('.axis-indicator__toggle');
+  const resizeHandle = axisIndicator?.querySelector('.axis-indicator__resize-handle');
 
   if (!axisIndicator) return;
 
@@ -282,10 +259,10 @@ function setupAxisIndicatorDraggable() {
     document.removeEventListener('mouseup', onMouseUp);
   };
 
-  // Only start drag if clicking on the content area (not toggle or resize)
+  // Only start drag if clicking on the resize handle
   axisIndicator.addEventListener('mousedown', (e) => {
-    // Don't drag if clicking on toggle button or resize handle
-    if (e.target === toggleBtn || e.target.closest('.axis-indicator__resize-handle')) {
+    // Don't drag if clicking on resize handle (let resize handle handle its own drag)
+    if (e.target.closest('.axis-indicator__resize-handle')) {
       return;
     }
     e.preventDefault();

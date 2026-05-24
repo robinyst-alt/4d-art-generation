@@ -50,29 +50,9 @@
   min-height: 100px;
 }
 
-.axis-indicator__toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: var(--space-1) var(--space-2);
-  background: transparent;
-  border: none;
-  color: #ffffff;
-  font-size: var(--text-lg);
-  font-weight: var(--font-bold);
-  cursor: pointer;
-  transition: color var(--duration-fast) ease;
-}
-
-.axis-indicator__toggle:hover {
-  color: #cccccc;
-}
-
 .axis-indicator__content {
   display: block;
   padding: var(--space-2);
-  pointer-events: none;
 }
 
 .axis-indicator__canvas {
@@ -93,8 +73,9 @@
   letter-spacing: 0.05em;
 }
 
-.axis-indicator--collapsed .axis-indicator__content {
-  display: none;
+/* Axis Indicator - whole box is draggable */
+.axis-indicator {
+  cursor: move;
 }
 
 /* Axis Indicator Resize Handle */
