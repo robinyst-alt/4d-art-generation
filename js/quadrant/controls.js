@@ -221,6 +221,11 @@ function bindAxisEvents(container, controls) {
 
       notifyListeners(controls, axis, 'value', value);
     });
+
+    // Slider pointer down - focus this axis for keyboard control
+    slider.addEventListener('pointerdown', () => {
+      notifyListeners(controls, axis, 'focus', axis);
+    });
   });
 }
 

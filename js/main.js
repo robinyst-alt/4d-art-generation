@@ -489,6 +489,11 @@ function setupQuadrantControls() {
 
       updateSliceFromQuadrantState();
     });
+
+    // Focus event (from slider pointer down)
+    onAxisChange(quadrantControls, axis, 'focus', () => {
+      focusedAxis = axis;
+    });
   });
 }
 
