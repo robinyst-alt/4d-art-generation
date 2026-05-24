@@ -146,40 +146,44 @@ export function getScene() {
 export function createAxisIndicator(size = 1, freeAxes = ['x', 'y', 'z']) {
   const group = new THREE.Group();
 
-  // Standard basis vectors for assignment
-  const STANDARD_BASIS = {
-    x: new THREE.Vector3(1, 0, 0),
-    y: new THREE.Vector3(0, 1, 0),
-    z: new THREE.Vector3(0, 0, 1)
-  };
-  const basisOrder = ['x', 'y', 'z'];
+  // Basis vectors - these are the "seats"
+  const BASES = [
+    new THREE.Vector3(1, 0, 0),
+    new THREE.Vector3(0, 1, 0),
+    new THREE.Vector3(0, 0, 1)
+  ];
 
-  // Assign directions dynamically to maintain orthogonality
-  // First axis -> first available standard basis
-  // Second axis -> next available standard basis
-  // Third axis -> cross product of first two (perpendicular to both)
-  const axisDirections = {};
-  const usedBasises = [];
+  // Each axis gets a "seat index" when first assigned
+  // This is persistent - when an axis leaves, its seat stays empty
+  // Other axes don't move seats
+  const axisSeats = {};
+  let nextSeatIndex = 0;
 
-  freeAxes.forEach((axisName, index) => {
-    if (index < 2) {
-      // First two axes get standard basis vectors
-      const basisKey = basisOrder[usedBasises.length];
-      axisDirections[axisName] = STANDARD_BASIS[basisKey].clone();
-      usedBasises.push(basisKey);
-    } else {
-      // Third axis: cross product of first two assigned directions
-      const dir0 = axisDirections[freeAxes[0]];
-      const dir1 = axisDirections[freeAxes[1]];
-      axisDirections[axisName] = dir0.clone().cross(dir1).normalize();
+  // Assign seats to axes: each axis gets a fixed seat, no reassignment
+  freeAxes.forEach(axisName => {
+    if (!(axisName in axisSeats)) {
+      // New axis - assign next available seat
+      axisSeats[axisName] = nextSeatIndex;
+      nextSeatIndex++;
     }
   });
 
   // Create axis lines with labels
   freeAxes.forEach(axisName => {
-    const direction = axisDirections[axisName];
+    const seatIndex = axisSeats[axisName];
     const isSmall = axisName === 'w';
     const axisSize = isSmall ? size * 0.6 : size;
+
+    let direction;
+    if (seatIndex < 2) {
+      // Seat 0 or 1: use standard basis
+      direction = BASES[seatIndex].clone();
+    } else {
+      // Seat 2: compute perpendicular direction from seats 0 and 1
+      const dir0 = BASES[axisSeats[freeAxes[0]]] || BASES[0];
+      const dir1 = BASES[axisSeats[freeAxes[1]]] || BASES[1];
+      direction = dir0.clone().cross(dir1).normalize();
+    }
 
     // Line from origin to direction
     const lineEnd = direction.clone().normalize().multiplyScalar(axisSize);
