@@ -15,7 +15,7 @@ import { createCamera, enableControls, setPosition, setFOV, lookAt, updateContro
 import { createRenderer, render, setAnimationLoop, startAnimationLoop, stopAnimationLoop, resizeToFit, captureScreenshot, clearRenderer } from './render/renderer.js';
 import { extractSlice, toThreePoints } from './fourD/slice.js';
 import { generate } from './fourD/generators.js';
-import { extractMultiAxisSlice, getCameraAxes } from './quadrant/stateManager.js';
+import { extractMultiAxisSlice } from './quadrant/stateManager.js';
 import { generateContentHash } from './utils/hash.js';
 
 /**
@@ -62,8 +62,6 @@ export function createApp(initialState = {}) {
   let axisControls = null;
   let axisIndicatorGroup = null;
   let axisScale = 1.5; // Initial scale for axis indicator
-  let axisOffsetX = 0; // X offset for axis position in mini canvas
-  let axisOffsetY = 0; // Y offset for axis position in mini canvas
 
   // Current points mesh
   let currentPoints = null;
@@ -469,7 +467,7 @@ export function createApp(initialState = {}) {
   }
 
   /**
-   * Zoom the axis indicator (recreate with new scale for thicker/thinner elements)
+   * Zoom the axis indicator (scale the axis group)
    * @param {number} delta - Zoom delta (positive = zoom in, negative = zoom out)
    */
   function zoomAxisIndicator(delta) {
@@ -477,55 +475,10 @@ export function createApp(initialState = {}) {
     axisScale = Math.max(0.3, Math.min(5, axisScale + delta));
     axisScale = Math.round(axisScale * 10) / 10; // Round to 1 decimal
 
-    // Recreate axis indicator with new scale for proper thickness scaling
-    if (axisScene && axisIndicatorGroup) {
-      // Remove old
-      axisScene.remove(axisIndicatorGroup);
-      axisIndicatorGroup.traverse((child) => {
-        if (child.geometry) child.geometry.dispose();
-        if (child.material) {
-          if (Array.isArray(child.material)) {
-            child.material.forEach(m => m.dispose());
-          } else {
-            child.material.dispose();
-          }
-        }
-      });
-
-      // Get current free axes from quadrant state
-      const freeAxes = getCameraAxes ? getCameraAxes(quadrantState) : ['x', 'y', 'z'];
-
-      // Create new with scaled size
-      axisIndicatorGroup = createAxisIndicator(axisScale, freeAxes);
-      axisIndicatorGroup.position.set(axisOffsetX, axisOffsetY, 0);
-      addAxisIndicator(axisScene, axisIndicatorGroup);
-    }
-  }
-
-  /**
-   * Drag the axis indicator within the mini canvas
-   * @param {number} dx - Delta X movement
-   * @param {number} dy - Delta Y movement
-   */
-  function dragAxisIndicator(dx, dy) {
-    // Update offset (limit to reasonable bounds based on canvas size)
-    const limit = 30;
-    axisOffsetX = Math.max(-limit, Math.min(limit, axisOffsetX + dx));
-    axisOffsetY = Math.max(-limit, Math.min(limit, axisOffsetY + dy));
-
-    // Apply position offset to the axis indicator group
+    // Apply scale to the axis indicator group
     if (axisIndicatorGroup) {
-      axisIndicatorGroup.position.x = axisOffsetX;
-      axisIndicatorGroup.position.y = axisOffsetY;
+      axisIndicatorGroup.scale.set(axisScale, axisScale, axisScale);
     }
-  }
-
-  /**
-   * Get current axis offset
-   * @returns {Object} Current offset {x, y}
-   */
-  function getAxisOffset() {
-    return { x: axisOffsetX, y: axisOffsetY };
   }
 
   /**
@@ -558,9 +511,7 @@ export function createApp(initialState = {}) {
     updateAxisIndicator,
     resizeAxisCanvas,
     zoomAxisIndicator,
-    dragAxisIndicator,
     getAxisScale,
-    getAxisOffset,
     setTheme,
     getState,
     start,
