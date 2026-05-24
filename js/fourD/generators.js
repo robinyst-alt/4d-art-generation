@@ -48,32 +48,32 @@ function sdfCube(x, y, z, size) {
 }
 
 /**
- * 8-color gradient palette: deep gray to light gray
+ * 8-color gradient palette: dark gray to light gray (high contrast)
  * Inner (core) points = darker, outer points = lighter
- * Adjusted for better visual distinction (less white dominance)
+ * High contrast for visible gradient effect
  */
 const GRADIENT_COLORS_8 = [
-  { r: 0.08, g: 0.08, b: 0.08 }, // 深灰黑 - innermost
-  { r: 0.20, g: 0.20, b: 0.20 }, // 深灰
-  { r: 0.38, g: 0.38, b: 0.38 }, // 暗灰
-  { r: 0.55, g: 0.55, b: 0.55 }, // 中灰
-  { r: 0.70, g: 0.70, b: 0.70 }, // 浅灰
-  { r: 0.82, g: 0.82, b: 0.82 }, // 亮灰
-  { r: 0.90, g: 0.90, b: 0.90 }, // 浅灰白
-  { r: 0.96, g: 0.96, b: 0.96  }, // 近白 - outermost (not pure white)
+  { r: 0.10, g: 0.10, b: 0.10 }, // 深灰黑 - innermost
+  { r: 0.25, g: 0.25, b: 0.25 }, // 深灰
+  { r: 0.45, g: 0.45, b: 0.45 }, // 暗灰
+  { r: 0.60, g: 0.60, b: 0.60 }, // 中灰
+  { r: 0.75, g: 0.75, b: 0.75 }, // 浅灰
+  { r: 0.88, g: 0.88, b: 0.88 }, // 亮灰
+  { r: 0.95, g: 0.95, b: 0.95 }, // 浅灰白
+  { r: 1.0,  g: 1.0,  b: 1.0  }, // 白色 - outermost
 ];
 
 /**
  * Get gradient color based on normalized distance from center
- * Uses linear-ish mapping for more even color distribution
+ * Steeper curve: inner region has more pixels (slower transition)
  * @param {number} normalizedDist - Distance normalized to [0, 1], where 0 = center, 1 = surface
  * @returns {{r: number, g: number, b: number}} RGB color values
  */
 function getGradientColor(normalizedDist) {
   const clampedDist = Math.max(0, Math.min(1, normalizedDist));
-  // Use sqrt curve for more linear transition (less compression at ends)
-  // Inner and outer regions have more balanced color counts
-  const curve = Math.sqrt(clampedDist);
+  // Use power curve < 1 for steeper transition
+  // More pixels get inner colors, outer transition is faster
+  const curve = Math.pow(clampedDist, 0.45);
   const index = Math.floor(curve * GRADIENT_COLORS_8.length);
   return GRADIENT_COLORS_8[Math.min(index, GRADIENT_COLORS_8.length - 1)];
 }
