@@ -233,6 +233,7 @@ export function createApp(initialState = {}) {
 
       return true;
     }
+  }
 
   /**
    * Set the active color theme
