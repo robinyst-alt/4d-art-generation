@@ -193,9 +193,7 @@ export function createApp(initialState = {}) {
     }
 
     // Handle updateSlice calls without quadrantState (F107 point spacing updates)
-    // These calls need to re-render with current state
     if (!quadrantState) {
-      // When no quadrantState, get it from state
       const state = stateContainer.getState();
       quadrantState = state.quadrantState;
     }
@@ -203,45 +201,43 @@ export function createApp(initialState = {}) {
     if (!quadrantState) {
       return false;
     }
-      const extracted = extractMultiAxisSlice(matrix, quadrantState);
-      const pointsData = toThreePoints(extracted.data, resolution, extracted.dimensions);
 
-      // Apply point spacing multiplier (Level 1=1x, Level 2=2x, etc.)
-      const spacingMultiplier = stateContainer.getState().pointSpacing || 1;
-      for (let i = 0; i < pointsData.positions.length; i++) {
-        pointsData.positions[i] *= spacingMultiplier;
-      }
+    const extracted = extractMultiAxisSlice(matrix, quadrantState);
+    const pointsData = toThreePoints(extracted.data, resolution, extracted.dimensions);
 
-      // Remove old points if exists
-      if (currentPoints) {
-        clearScene(scene);
-        currentPoints = null;
-      }
-
-      // Create new points geometry
-      const geometry = new THREE.BufferGeometry();
-      geometry.setAttribute('position', new THREE.BufferAttribute(pointsData.positions, 3));
-
-      if (pointsData.colors && pointsData.colors.length > 0) {
-        geometry.setAttribute('color', new THREE.BufferAttribute(pointsData.colors, 3));
-      }
-
-      const state = stateContainer.getState();
-      // Keep point size constant regardless of spacing
-      // so apparent size stays the same as points spread out
-      const material = new THREE.PointsMaterial({
-        size: 0.2,
-        vertexColors: true,
-        transparent: true,
-        opacity: 1.0,
-        sizeAttenuation: true
-      });
-
-      currentPoints = new THREE.Points(geometry, material);
-      addMesh(scene, currentPoints);
-
-      return true;
+    // Apply point spacing multiplier (Level 1=1x, Level 2=2x, etc.)
+    const spacingMultiplier = stateContainer.getState().pointSpacing || 1;
+    for (let i = 0; i < pointsData.positions.length; i++) {
+      pointsData.positions[i] *= spacingMultiplier;
     }
+
+    // Remove old points if exists
+    if (currentPoints) {
+      clearScene(scene);
+      currentPoints = null;
+    }
+
+    // Create new points geometry
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(pointsData.positions, 3));
+
+    if (pointsData.colors && pointsData.colors.length > 0) {
+      geometry.setAttribute('color', new THREE.BufferAttribute(pointsData.colors, 3));
+    }
+
+    const state = stateContainer.getState();
+    const material = new THREE.PointsMaterial({
+      size: 0.2,
+      vertexColors: true,
+      transparent: true,
+      opacity: 1.0,
+      sizeAttenuation: true
+    });
+
+    currentPoints = new THREE.Points(geometry, material);
+    addMesh(scene, currentPoints);
+
+    return true;
   }
 
   /**
