@@ -219,7 +219,7 @@ export function createApp(initialState = {}) {
 
       const state = stateContainer.getState();
       const material = new THREE.PointsMaterial({
-        size: 0.2,
+        size: 0.4,
         vertexColors: true,
         transparent: true,
         opacity: 1.0,
@@ -260,7 +260,7 @@ export function createApp(initialState = {}) {
 
     // Create material
     const material = new THREE.PointsMaterial({
-      size: 0.2,
+      size: 0.4,
       vertexColors: true,
       transparent: true,
       opacity: 1.0,
