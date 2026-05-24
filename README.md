@@ -4,6 +4,27 @@ An interactive art tool for exploring four-dimensional geometry.
 
 English | [中文](./README_zh.md)
 
+## Overview
+
+4D Art is a browser-based creative tool that enables artists and math enthusiasts to visualize and interact with four-dimensional geometric objects. Using signed distance functions (SDF) and WebGL rendering, users can explore complex 4D shapes through intuitive slice controls across four axes (X, Y, Z, W).
+
+## Value Proposition
+
+**For Digital Artists**: Create unique visual content by exploring shapes impossible in traditional 3D space. Export point cloud renders for use in downstream creative workflows.
+
+**For Math Enthusiasts**: Intuitive visualization of 4D concepts like Tesseracts and 4D spheres. Interactive slice exploration helps build mental models of higher dimensions.
+
+**For Educators**: Demonstrable 4D geometry in the browser without specialized software. Gradient coloring reveals internal structure of complex shapes.
+
+## Target Users
+
+| User | Use Case |
+|------|----------|
+| Digital Artists | Creating unique 4D-inspired visual art |
+| Math Enthusiasts | Exploring higher-dimensional geometry |
+| Educators | Teaching 4D concepts interactively |
+| Researchers | Quick prototyping of 4D shape ideas |
+
 ## Current Status
 
 **Phase 1 Complete** ✅
