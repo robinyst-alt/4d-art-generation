@@ -22,6 +22,16 @@ import {
   getCameraRotationDimensions
 } from './quadrant/stateManager.js';
 import { updateControlsForRotationDimensions } from './render/camera.js';
+import {
+  storeOriginalMatrix,
+  setMode3D,
+  getMode3D,
+  isMode3DRotated,
+  resetToOriginal,
+  isResetNeeded,
+  setCurrentMatrix,
+  getCurrentMatrix
+} from './transform/state.js';
 
 /**
  * Global application instance
@@ -326,7 +336,11 @@ const TRANSLATIONS = {
     shortcut_shape: 'Select shape',
     screenshot: 'Save Image',
     loading: 'Generating...',
-    point_spacing: 'Point Spacing'
+    point_spacing: 'Point Spacing',
+    transform_title: 'Random Transform',
+    transform_3d: '3D Rotation',
+    transform_4d: '4D Rotation',
+    transform_reset: 'Reset'
   },
   zh: {
     quadrant_title: '四轴控制',
@@ -351,7 +365,11 @@ const TRANSLATIONS = {
     shortcut_shape: '选择形状',
     screenshot: '保存图片',
     loading: '生成中...',
-    point_spacing: '点间距'
+    point_spacing: '点间距',
+    transform_title: '随机变幻',
+    transform_3d: '3D旋转',
+    transform_4d: '4D旋转',
+    transform_reset: '重置'
   }
 };
 
@@ -625,6 +643,87 @@ function setupControls() {
       });
     }
   }
+
+  // Transform panel buttons (3D/4D rotation, reset)
+  setupTransformControls();
+}
+
+/**
+ * Set up transform panel (3D/4D rotation buttons and reset)
+ */
+function setupTransformControls() {
+  const btn3D = document.getElementById('transform-3d-btn');
+  const btn4D = document.getElementById('transform-4d-btn');
+  const btnReset = document.getElementById('transform-reset-btn');
+  const statusEl = document.getElementById('transform-status');
+
+  if (!btn3D || !btn4D || !btnReset) return;
+
+  // 3D Rotation button - toggle mode
+  btn3D.addEventListener('click', () => {
+    const currentMode = getMode3D();
+    if (currentMode === 'normal') {
+      // Enable 3D rotation mode
+      setMode3D('rotated');
+      btn3D.setAttribute('data-active', 'true');
+      showTransformStatus('3D rotation enabled');
+    } else {
+      // Disable 3D rotation mode
+      setMode3D('normal');
+      btn3D.setAttribute('data-active', 'false');
+      showTransformStatus('3D rotation disabled');
+    }
+    // Trigger re-render if app supports it
+    if (appInstance && quadrantState) {
+      updateSliceFromQuadrantState();
+    }
+  });
+
+  // 4D Rotation button - trigger animation
+  btn4D.addEventListener('click', () => {
+    if (!appInstance) return;
+
+    // Store original matrix on first transform
+    const state = appInstance.getState();
+    if (state.matrix && !getCurrentMatrix()) {
+      storeOriginalMatrix(state.matrix);
+    }
+
+    // TODO: Trigger 4D animation when ready
+    showTransformStatus('4D rotation (coming soon)');
+  });
+
+  // Reset button
+  btnReset.addEventListener('click', () => {
+    const original = resetToOriginal();
+    if (original && appInstance) {
+      appInstance.setMatrix(original);
+      // Reset 3D mode
+      setMode3D('normal');
+      btn3D.setAttribute('data-active', 'false');
+      // Update UI
+      updateSliceFromQuadrantState();
+      btnReset.disabled = true;
+      showTransformStatus('Reset complete');
+    }
+  });
+}
+
+/**
+ * Show transform status message with auto-hide
+ * @param {string} message - Status message to display
+ * @param {number} duration - How long to show message in ms (default 2000)
+ */
+function showTransformStatus(message, duration = 2000) {
+  const statusEl = document.getElementById('transform-status');
+  if (!statusEl) return;
+
+  statusEl.textContent = message;
+  statusEl.style.opacity = '1';
+
+  setTimeout(() => {
+    statusEl.style.opacity = '0';
+  }, duration);
 }
 
 /**

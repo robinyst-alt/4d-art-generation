@@ -111,6 +111,26 @@
       <p id="shape-description" class="visually-hidden" data-i18n="shape_description">Select a 4D geometric shape to generate</p>
     </div>
 
+    <!-- Transform Panel - 3D/4D Random Transform -->
+    <div class="control-group">
+      <div class="transform-panel__title" data-i18n="transform_title">Random Transform</div>
+      <div class="transform-panel" role="group" aria-label="Random transform controls">
+        <button id="transform-3d-btn" class="transform-btn transform-btn--3d" data-control="transform-3d">
+          <span class="transform-btn__icon">↻</span>
+          <span class="transform-btn__text" data-i18n="transform_3d">3D Rotation</span>
+        </button>
+        <button id="transform-4d-btn" class="transform-btn transform-btn--4d" data-control="transform-4d">
+          <span class="transform-btn__icon">✦</span>
+          <span class="transform-btn__text" data-i18n="transform_4d">4D Rotation</span>
+        </button>
+        <button id="transform-reset-btn" class="transform-btn transform-btn--reset" data-control="transform-reset" disabled>
+          <span class="transform-btn__icon">↺</span>
+          <span class="transform-btn__text" data-i18n="transform_reset">Reset</span>
+        </button>
+      </div>
+      <div id="transform-status" class="transform-status" aria-live="polite"></div>
+    </div>
+
     <!-- Quadrant Controls - Four Axis Slice/Free Control -->
     <div class="control-group">
       <div class="quadrant-controls__title" data-i18n="quadrant_title">Four-Axis Control</div>
