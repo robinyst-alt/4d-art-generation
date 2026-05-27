@@ -64,6 +64,10 @@ export function createApp(initialState = {}) {
   let axisIndicatorGroup = null;
   let axisScale = 1.5; // Initial scale for axis indicator
 
+  // Shape rotation tracking (for 3D rotation mode)
+  let shapeRotation = null; // THREE.Euler for tracking shape rotation
+  let shapeRotationMode = false; // When true, shape rotates but axes don't
+
   // Current points mesh
   let currentPoints = null;
 
@@ -128,19 +132,30 @@ export function createApp(initialState = {}) {
    * Animation loop
    */
   function animate() {
-    // Update main camera controls
-    updateControls();
+    // Update main camera controls (only when NOT in rotation mode)
+    if (!shapeRotationMode) {
+      updateControls();
+    }
 
-    // Sync axis indicator group rotation with main camera
-    // The axis indicator should appear to rotate the same way as the camera
-    // is observing it - use the camera's quaternion directly
+    // Handle rotation mode differently:
+    // - In rotation mode: track camera drag as shape rotation, keep axes fixed
+    // - Normal mode: normal camera controls, axes follow camera
     if (axisIndicatorGroup) {
       const q = getQuaternion();
       if (q) {
-        // Apply camera's rotation to axis group (conjugate = inverse for unit quaternion)
-        // This makes the axes show the correct orientation as camera view changes
-        axisIndicatorGroup.quaternion.copy(q).invert();
+        if (shapeRotationMode) {
+          // In rotation mode, axis indicator stays fixed (no quaternion applied)
+          axisIndicatorGroup.quaternion.set(0, 0, 0, 1);
+        } else {
+          // Normal mode: axis indicator follows camera view
+          axisIndicatorGroup.quaternion.copy(q).invert();
+        }
       }
+    }
+
+    // Apply shape rotation when in rotation mode
+    if (currentPoints && shapeRotationMode && shapeRotation) {
+      currentPoints.rotation.copy(shapeRotation);
     }
 
     // Render main scene
@@ -477,6 +492,62 @@ export function createApp(initialState = {}) {
     dispatch(stateContainer, { type: ACTIONS.SET_QUADRANT_STATE, payload: qs });
   }
 
+  /**
+   * Enable or disable shape rotation mode
+   * When enabled, dragging rotates the shape instead of the camera
+   * @param {boolean} enabled - Whether to enable rotation mode
+   */
+  function setRotationMode(enabled) {
+    shapeRotationMode = enabled;
+    if (enabled) {
+      // Initialize rotation if not set
+      if (!shapeRotation) {
+        shapeRotation = new THREE.Euler(0, 0, 0);
+      }
+      // Reset shape rotation when entering mode
+      shapeRotation.set(0, 0, 0);
+      if (currentPoints) {
+        currentPoints.rotation.set(0, 0, 0);
+      }
+    } else {
+      // Exit rotation mode - restore camera controls
+      if (currentPoints && shapeRotation) {
+        // Optionally reset shape rotation when exiting
+        shapeRotation.set(0, 0, 0);
+        currentPoints.rotation.set(0, 0, 0);
+      }
+    }
+  }
+
+  /**
+   * Check if rotation mode is enabled
+   * @returns {boolean}
+   */
+  function isRotationMode() {
+    return shapeRotationMode;
+  }
+
+  /**
+   * Update shape rotation from camera drag (call when user drags in rotation mode)
+   * @param {THREE.Euler} rotation - The rotation to apply
+   */
+  function updateShapeRotation(rotation) {
+    if (shapeRotation) {
+      shapeRotation.copy(rotation);
+      if (currentPoints) {
+        currentPoints.rotation.copy(shapeRotation);
+      }
+    }
+  }
+
+  /**
+   * Get current shape rotation
+   * @returns {THREE.Euler|null}
+   */
+  function getShapeRotation() {
+    return shapeRotation ? shapeRotation.clone() : null;
+  }
+
   // Return public API
   return {
     init,
@@ -484,7 +555,6 @@ export function createApp(initialState = {}) {
     generate: generateShape,
     updateSlice,
     updateAxisIndicator,
-    setQuadrantState,
     setQuadrantState,
     resizeAxisCanvas,
     zoomAxisIndicator,
@@ -494,6 +564,10 @@ export function createApp(initialState = {}) {
     start,
     stop,
     destroy,
-    takeScreenshot
+    takeScreenshot,
+    setRotationMode,
+    isRotationMode,
+    updateShapeRotation,
+    getShapeRotation
   };
 }

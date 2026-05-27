@@ -30,8 +30,16 @@ import {
   resetToOriginal,
   isResetNeeded,
   setCurrentMatrix,
-  getCurrentMatrix
+  getCurrentMatrix,
+  setRotationMatrix,
+  getRotationMatrix
 } from './transform/state.js';
+import {
+  generateSphericalCoords,
+  buildRotationMatrix,
+  getRotatedAxes,
+  generateRandomRotationMatrix
+} from './transform/rotator3d.js';
 
 /**
  * Global application instance
@@ -338,8 +346,8 @@ const TRANSLATIONS = {
     loading: 'Generating...',
     point_spacing: 'Point Spacing',
     transform_title: 'Random Transform',
-    transform_3d: '3D Rotation',
-    transform_4d: '4D Rotation',
+    transform_3d: '3D旋转',
+    transform_4d: '4D随机变幻',
     transform_reset: 'Reset'
   },
   zh: {
@@ -526,7 +534,10 @@ function updateSliceFromQuadrantState() {
   const currentMatrix = state.matrix;
   if (!currentMatrix) return;
 
-  const extracted = extractMultiAxisSlice(currentMatrix, quadrantState);
+  // Get rotation matrix for 3D rotation mode
+  const rotationMatrix = isMode3DRotated() ? getRotationMatrix() : null;
+
+  const extracted = extractMultiAxisSlice(currentMatrix, quadrantState, rotationMatrix);
 
   // Get camera axes (non-locked) for updating both DOM and 3D axis indicator
   const cameraAxes = getCameraAxes(quadrantState);
@@ -664,13 +675,24 @@ function setupTransformControls() {
     const currentMode = getMode3D();
     if (currentMode === 'normal') {
       // Enable 3D rotation mode
-      setMode3D('rotated');
+      // Generate random rotation matrix
+      const R = generateRandomRotationMatrix();
+      setMode3D('rotated', R);
+      setRotationMatrix(R);
       btn3D.setAttribute('data-active', 'true');
+      // Enable rotation mode in app (dragging rotates shape instead of camera)
+      if (appInstance) {
+        appInstance.setRotationMode(true);
+      }
       showTransformStatus('3D rotation enabled');
     } else {
       // Disable 3D rotation mode
       setMode3D('normal');
       btn3D.setAttribute('data-active', 'false');
+      // Disable rotation mode in app
+      if (appInstance) {
+        appInstance.setRotationMode(false);
+      }
       showTransformStatus('3D rotation disabled');
     }
     // Trigger re-render if app supports it
@@ -697,10 +719,10 @@ function setupTransformControls() {
   btnReset.addEventListener('click', () => {
     const original = resetToOriginal();
     if (original && appInstance) {
-      appInstance.setMatrix(original);
       // Reset 3D mode
       setMode3D('normal');
       btn3D.setAttribute('data-active', 'false');
+      appInstance.setRotationMode(false);
       // Update UI
       updateSliceFromQuadrantState();
       btnReset.disabled = true;

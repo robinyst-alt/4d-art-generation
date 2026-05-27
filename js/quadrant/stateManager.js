@@ -275,13 +275,14 @@ export function getCameraRotationDimensions(state) {
  *
  * @param {Float32Array} matrix - 4D matrix [w][z][y][x][rgba]
  * @param {Object} state - Quadrant state
+ * @param {number[]} [rotationMatrix] - Optional 3x3 rotation matrix (column-major) for 3D rotation mode
  * @returns {Object} Object with:
  *   - data: Float32Array of extracted slice
  *   - dimensions: 3, 2, or 1 (resulting dimensional reduction)
  *   - sliceAxes: array of axes that were sliced
  *   - freeAxes: array of axes that remain free
  */
-export function extractMultiAxisSlice(matrix, state) {
+export function extractMultiAxisSlice(matrix, state, rotationMatrix = null) {
   const sliceAxes = getSliceAxes(state);
 
   // Validation: at least 1 slice axis required
@@ -301,13 +302,13 @@ export function extractMultiAxisSlice(matrix, state) {
   // Build the extraction based on which axes are sliced
   if (sliceAxes.length === 1) {
     // Single slice: extract 3D slice (w is default slice axis)
-    return extract3DSlice(matrix, resolution, sliceAxes[0], sliceValues[sliceAxes[0]], dimensions);
+    return extract3DSlice(matrix, resolution, sliceAxes[0], sliceValues[sliceAxes[0]], dimensions, rotationMatrix);
   } else if (sliceAxes.length === 2) {
     // Two slices: extract 2D slice (plane)
-    return extract2DSlice(matrix, resolution, sliceAxes, sliceValues, dimensions);
+    return extract2DSlice(matrix, resolution, sliceAxes, sliceValues, dimensions, rotationMatrix);
   } else if (sliceAxes.length === 3) {
     // Three slices: extract 1D slice (line)
-    return extract1DSlice(matrix, resolution, sliceAxes, sliceValues, dimensions);
+    return extract1DSlice(matrix, resolution, sliceAxes, sliceValues, dimensions, rotationMatrix);
   }
 
   throw new Error('Cannot slice all 4 axes');
@@ -315,19 +316,83 @@ export function extractMultiAxisSlice(matrix, state) {
 
 /**
  * Extract 3D slice at a specific index for any axis
+ * @param {Float32Array} matrix - 4D matrix [w][z][y][x][rgba]
+ * @param {number} resolution - Resolution
+ * @param {string} sliceAxis - The axis being sliced (x, y, z, or w)
+ * @param {number} sliceValue - The slice value along the slice axis
+ * @param {number} dimensions - Resulting dimensions (3)
+ * @param {number[]} [rotationMatrix] - Optional 3x3 rotation matrix (column-major)
  */
-function extract3DSlice(matrix, resolution, sliceAxis, sliceValue, dimensions) {
+function extract3DSlice(matrix, resolution, sliceAxis, sliceValue, dimensions, rotationMatrix = null) {
+  // If no rotation, use fast path
+  if (!rotationMatrix) {
+    return extract3DSliceFast(matrix, resolution, sliceAxis, sliceValue, dimensions);
+  }
+
+  // With rotation: compute offset and use trilinear interpolation
   const sliceData = new Float32Array(Math.pow(resolution, 3) * 4);
 
-  // Get the indices for the three free axes (all axes except the slice axis)
+  // Get base vector for slice axis (e.g., (1,0,0) for X, (0,1,0) for Y, etc.)
+  const baseVector = getAxisBaseVector(sliceAxis);
+
+  // Compute the offset: sliceValue * R * baseVector
+  const offset = applyRotationToVector(sliceValue, baseVector, rotationMatrix);
+
+  // Get the three free axes
   const axes = ['x', 'y', 'z', 'w'];
   const freeAxes = axes.filter(axis => axis !== sliceAxis);
 
-  // Iterate over the three free dimensions
+  // Iterate over the three free dimensions and sample with trilinear interpolation
   for (let i = 0; i < resolution; i++) {
     for (let j = 0; j < resolution; j++) {
       for (let k = 0; k < resolution; k++) {
-        // Map indices to axes based on which axis is the slice axis
+        // Map indices to axes
+        const axisIndices = {};
+        freeAxes.forEach((axis, idx) => {
+          if (idx === 0) axisIndices[axis] = i;
+          else if (idx === 1) axisIndices[axis] = j;
+          else axisIndices[axis] = k;
+        });
+
+        // Original point in original matrix space
+        const origX = axisIndices.x;
+        const origY = axisIndices.y;
+        const origZ = axisIndices.z;
+        const origW = axisIndices.w;
+
+        // Apply rotation offset to get sampling position
+        const sampleX = origX + offset.x;
+        const sampleY = origY + offset.y;
+        const sampleZ = origZ + offset.z;
+        const sampleW = origW; // W is not affected by 3D rotation
+
+        // Trilinear interpolation
+        const value = trilinearInterpolate(matrix, resolution, sampleX, sampleY, sampleZ, sampleW);
+
+        const dstIndex = (i * resolution * resolution + j * resolution + k) * 4;
+        sliceData[dstIndex] = value.r;
+        sliceData[dstIndex + 1] = value.g;
+        sliceData[dstIndex + 2] = value.b;
+        sliceData[dstIndex + 3] = value.a;
+      }
+    }
+  }
+
+  return { data: sliceData, dimensions, sliceAxes: [sliceAxis], freeAxes, sliceValues: { [sliceAxis]: sliceValue } };
+}
+
+/**
+ * Fast path for 3D slice without rotation
+ */
+function extract3DSliceFast(matrix, resolution, sliceAxis, sliceValue, dimensions) {
+  const sliceData = new Float32Array(Math.pow(resolution, 3) * 4);
+
+  const axes = ['x', 'y', 'z', 'w'];
+  const freeAxes = axes.filter(axis => axis !== sliceAxis);
+
+  for (let i = 0; i < resolution; i++) {
+    for (let j = 0; j < resolution; j++) {
+      for (let k = 0; k < resolution; k++) {
         const axisIndices = {};
         freeAxes.forEach((axis, idx) => {
           if (idx === 0) axisIndices[axis] = i;
@@ -354,9 +419,158 @@ function extract3DSlice(matrix, resolution, sliceAxis, sliceValue, dimensions) {
 }
 
 /**
- * Extract 2D slice (plane) at specific indices for any two axes
+ * Get base vector for an axis
  */
-function extract2DSlice(matrix, resolution, sliceAxes, sliceValues, dimensions) {
+function getAxisBaseVector(axis) {
+  switch (axis) {
+    case 'x': return [1, 0, 0];
+    case 'y': return [0, 1, 0];
+    case 'z': return [0, 0, 1];
+    case 'w': return [0, 0, 0]; // W is not affected by 3D rotation
+    default: return [0, 0, 0];
+  }
+}
+
+/**
+ * Apply rotation matrix to a scaled vector
+ * @param {number} scale - Scale factor
+ * @param {number[]} vector - 3D vector [x, y, z]
+ * @param {number[]} R - 3x3 rotation matrix (column-major)
+ * @returns {Object} { x, y, z } offset
+ */
+function applyRotationToVector(scale, vector, R) {
+  // R is column-major: R[col*3 + row]
+  const vx = vector[0];
+  const vy = vector[1];
+  const vz = vector[2];
+
+  return {
+    x: scale * (R[0] * vx + R[3] * vy + R[6] * vz),
+    y: scale * (R[1] * vx + R[4] * vy + R[7] * vz),
+    z: scale * (R[2] * vx + R[5] * vy + R[8] * vz)
+  };
+}
+
+/**
+ * Trilinear interpolation in 4D matrix
+ */
+function trilinearInterpolate(matrix, resolution, x, y, z, w) {
+  // Clamp to valid range
+  const maxVal = resolution - 1;
+  const x0 = Math.max(0, Math.min(maxVal, Math.floor(x)));
+  const y0 = Math.max(0, Math.min(maxVal, Math.floor(y)));
+  const z0 = Math.max(0, Math.min(maxVal, Math.floor(z)));
+  const w0 = Math.max(0, Math.min(maxVal, Math.floor(w)));
+
+  const x1 = Math.min(maxVal, x0 + 1);
+  const y1 = Math.min(maxVal, y0 + 1);
+  const z1 = Math.min(maxVal, z0 + 1);
+  const w1 = Math.min(maxVal, w0 + 1);
+
+  const tx = x - x0;
+  const ty = y - y0;
+  const tz = z - z0;
+  const tw = w - w0;
+
+  // Helper to get matrix value at integer coordinates (w, z, y, x order matches matrix layout)
+  const get = (wIdx, zIdx, yIdx, xIdx) => {
+    const idx = (wIdx * resolution * resolution * resolution +
+                 zIdx * resolution * resolution +
+                 yIdx * resolution +
+                 xIdx) * 4;
+    return { r: matrix[idx], g: matrix[idx + 1], b: matrix[idx + 2], a: matrix[idx + 3] };
+  };
+
+  // Interpolate in x direction
+  const c000 = get(w0, z0, y0, x0);
+  const c001 = get(w0, z0, y0, x1);
+  const c010 = get(w0, z0, y1, x0);
+  const c011 = get(w0, z0, y1, x1);
+  const c100 = get(w0, z1, y0, x0);
+  const c101 = get(w0, z1, y0, x1);
+  const c110 = get(w0, z1, y1, x0);
+  const c111 = get(w0, z1, y1, x1);
+
+  const c00 = {
+    r: c000.r + (c001.r - c000.r) * tx,
+    g: c000.g + (c001.g - c000.g) * tx,
+    b: c000.b + (c001.b - c000.b) * tx,
+    a: c000.a + (c001.a - c000.a) * tx
+  };
+  const c01 = {
+    r: c010.r + (c011.r - c010.r) * tx,
+    g: c010.g + (c011.g - c010.g) * tx,
+    b: c010.b + (c011.b - c010.b) * tx,
+    a: c010.a + (c011.a - c010.a) * tx
+  };
+  const c10 = {
+    r: c100.r + (c101.r - c100.r) * tx,
+    g: c100.g + (c101.g - c100.g) * tx,
+    b: c100.b + (c101.b - c100.b) * tx,
+    a: c100.a + (c101.a - c100.a) * tx
+  };
+  const c11 = {
+    r: c110.r + (c111.r - c110.r) * tx,
+    g: c110.g + (c111.g - c110.g) * tx,
+    b: c110.b + (c111.b - c110.b) * tx,
+    a: c110.a + (c111.a - c110.a) * tx
+  };
+
+  // Interpolate in y direction
+  const c0 = {
+    r: c00.r + (c01.r - c00.r) * ty,
+    g: c00.g + (c01.g - c00.g) * ty,
+    b: c00.b + (c01.b - c00.b) * ty,
+    a: c00.a + (c01.a - c00.a) * ty
+  };
+  const c1 = {
+    r: c10.r + (c11.r - c10.r) * ty,
+    g: c10.g + (c11.g - c10.g) * ty,
+    b: c10.b + (c11.b - c10.b) * ty,
+    a: c10.a + (c11.a - c10.a) * ty
+  };
+
+  // Interpolate in z direction
+  const c = {
+    r: c0.r + (c1.r - c0.r) * tz,
+    g: c0.g + (c1.g - c0.g) * tz,
+    b: c0.b + (c1.b - c0.b) * tz,
+    a: c0.a + (c1.a - c0.a) * tz
+  };
+
+  // Interpolate in w direction
+  return {
+    r: c.r + (c1.r - c0.r) * tw,
+    g: c.g + (c1.g - c0.g) * tw,
+    b: c.b + (c1.b - c0.b) * tw,
+    a: c.a + (c1.a - c0.a) * tw
+  };
+}
+
+/**
+ * Extract 2D slice (plane) at specific indices for any two axes
+ * @param {Float32Array} matrix - 4D matrix
+ * @param {number} resolution - Resolution
+ * @param {string[]} sliceAxes - Array of two slice axes
+ * @param {Object} sliceValues - Map of slice axis to slice value
+ * @param {number} dimensions - Resulting dimensions (2)
+ * @param {number[]} [rotationMatrix] - Optional 3x3 rotation matrix (column-major)
+ */
+function extract2DSlice(matrix, resolution, sliceAxes, sliceValues, dimensions, rotationMatrix = null) {
+  // If no rotation, use fast path
+  if (!rotationMatrix) {
+    return extract2DSliceFast(matrix, resolution, sliceAxes, sliceValues, dimensions);
+  }
+
+  // With rotation: this is more complex for 2D slices
+  // For now, fall back to fast path (rotation typically used with single-axis slices)
+  return extract2DSliceFast(matrix, resolution, sliceAxes, sliceValues, dimensions);
+}
+
+/**
+ * Fast path for 2D slice without rotation
+ */
+function extract2DSliceFast(matrix, resolution, sliceAxes, sliceValues, dimensions) {
   const sliceData = new Float32Array(Math.pow(resolution, 2) * 4);
 
   // Get the two free axes
@@ -395,8 +609,22 @@ function extract2DSlice(matrix, resolution, sliceAxes, sliceValues, dimensions) 
 
 /**
  * Extract 1D slice (line) at specific indices for any three axes
+ * @param {Float32Array} matrix - 4D matrix
+ * @param {number} resolution - Resolution
+ * @param {string[]} sliceAxes - Array of three slice axes
+ * @param {Object} sliceValues - Map of slice axis to slice value
+ * @param {number} dimensions - Resulting dimensions (1)
+ * @param {number[]} [rotationMatrix] - Optional 3x3 rotation matrix (column-major)
  */
-function extract1DSlice(matrix, resolution, sliceAxes, sliceValues, dimensions) {
+function extract1DSlice(matrix, resolution, sliceAxes, sliceValues, dimensions, rotationMatrix = null) {
+  // 1D slices with rotation are complex, fall back to fast path
+  return extract1DSliceFast(matrix, resolution, sliceAxes, sliceValues, dimensions);
+}
+
+/**
+ * Fast path for 1D slice without rotation
+ */
+function extract1DSliceFast(matrix, resolution, sliceAxes, sliceValues, dimensions) {
   const sliceData = new Float32Array(resolution * 4);
 
   // Get the single free axis
